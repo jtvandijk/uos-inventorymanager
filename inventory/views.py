@@ -256,7 +256,7 @@ def add_item(request):
             item.updated_at = timezone.now()
             item.save()
 
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+            return redirect('inventory')
     else:
         form = ItemForm()
 
