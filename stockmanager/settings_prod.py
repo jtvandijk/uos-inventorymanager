@@ -12,3 +12,8 @@ STATIC_URL = "/inventory/static/"
 # Extra security (safe defaults)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Nginx
+FORCE_SCRIPT_NAME = "/inventory"
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
