@@ -1,0 +1,267 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UOS Inventory Manager</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ message }}
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+
+        <div class="d-flex align-items-center gap-2">
+            <img src="{% static 'logo.jpeg' %}" alt="Logo" style="height: 40px;">
+            <h4 class="mb-0">UOS Inventory Manager</h4>
+            <span class="badge bg-dark px-3 py-2 shadow-sm" 
+                style="font-size: 0.9rem; border-radius: 8px; opacity: 0.85;">
+                Beta [v0.1]
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+
+            <span class="text-muted small">
+                Signed in as <strong>{{ request.user.username }}</strong> 👤
+            </span>
+
+            {% if is_admin %}
+            <a href="{% url 'volunteer' %}" class="btn btn-outline-primary btn-sm">
+                Volunteer View
+            </a>
+            {% endif %}
+
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+                {% csrf_token %}
+                <button class="btn btn-outline-secondary btn-sm">
+                    Logout
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Dashboard -->
+    <div class="row text-center mb-4">
+
+        <div class="col">
+            <div class="card p-2">
+                <h6>Total Items</h6>
+                <h4>{{ total_count }}</h4>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card p-2">
+                <h6 class="text-success">Available Items</h6>
+                <h4>{{ available_count }}</h4>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card p-2">
+                <h6 class="text-warning">Reserved Items</h6>
+                <h4>{{ reserved_count }}</h4>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card p-2">
+                <h6 class="text-muted">Given Items</h6>
+                <h4>{{ given_count }}</h4>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Filters -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <form method="get" class="d-flex gap-2 align-items-center">
+
+            <select name="category" class="form-select">
+                <option value="">Category</option>
+                {% for c in categories %}
+                <option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:"s" %}selected{% endif %}>
+                    {{ c.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="gender" class="form-select">
+                <option value="">Gender</option>
+                <option value="male" {% if request.GET.gender == "male" %}selected{% endif %}>Male</option>
+                <option value="female" {% if request.GET.gender == "female" %}selected{% endif %}>Female</option>
+                <option value="unisex" {% if request.GET.gender == "unisex" %}selected{% endif %}>Unisex</option>
+            </select>
+
+            <select name="status" class="form-select">
+                <option value="">Availability</option>
+                <option value="available" {% if request.GET.status == "available" %}selected{% endif %}>Available</option>
+                <option value="reserved" {% if request.GET.status == "reserved" %}selected{% endif %}>Reserved</option>
+                <option value="given" {% if request.GET.status == "given" %}selected{% endif %}>Given</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary">Filter</button>
+
+            <a href="{% url 'inventory' %}" class="btn btn-outline-secondary">Reset</a>
+
+        </form>
+
+        {% if is_admin %}
+        <a href="{% url 'add_item' %}" class="btn btn-success">
+            + Add Item
+        </a>
+        {% endif %}
+
+    </div>
+
+    <!-- Search -->
+    <div class="mb-3 d-flex justify-content-end">
+
+        <form method="get" class="w-25">
+
+            <input type="hidden" name="category" value="{{ request.GET.category }}">
+            <input type="hidden" name="gender" value="{{ request.GET.gender }}">
+            <input type="hidden" name="status" value="{{ request.GET.status }}">
+            <input type="hidden" name="per_page" value="{{ request.GET.per_page }}">
+
+            <input
+                type="text"
+                name="search"
+                value="{{ request.GET.search }}"
+                class="form-control"
+                placeholder="Search item ID"
+            >
+
+        </form>
+
+    </div>
+
+    <!-- Table -->
+    <table class="table table-bordered table-striped text-center align-middle">
+
+        <thead class="table-light">
+        <tr>
+            <th>ID</th>
+            <th>Category</th>
+            <th>Gender</th>
+            <th>Size</th>
+            <th>Status</th>
+            <th>Pickup</th>
+            <th>Details</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for item in page_obj %}
+        <tr>
+
+            <td>{{ item.code }}</td>
+
+            <td>{{ item.category.name }}</td>
+
+            <td>{{ item.get_gender_display }}</td>
+
+            <td>
+                {% if item.size and item.size != "N/A" %}
+                    {{ item.size }}
+                {% else %}
+                    <span class="text-muted">N/A</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% if item.status == "available" %}
+                    <span class="badge bg-success">Available</span>
+                {% elif item.status == "reserved" %}
+                    <span class="badge bg-warning text-dark">Reserved</span>
+                {% else %}
+                    <span class="badge bg-secondary">Given</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {% for res in item.reservation_set.all %}
+                    {% if res.status == "reserved" %}
+                        {{ res.reserved_for_date|date:"d M Y" }}
+                    {% endif %}
+                {% empty %}
+                    -
+                {% endfor %}
+            </td>
+
+            <td>
+                <a href="{% url 'view_item' item.id %}?{{ request.GET.urlencode }}"
+                   class="btn btn-primary btn-sm">
+                    View
+                </a>
+            </td>
+
+        </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+
+    <!-- Footer / Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+
+        <div class="text-muted">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </div>
+
+        <nav>
+            <ul class="pagination mb-0">
+
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                {% endif %}
+
+            </ul>
+        </nav>
+
+        <form method="get">
+            <select name="per_page" class="form-select" onchange="this.form.submit()">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

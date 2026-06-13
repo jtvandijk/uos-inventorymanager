@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Item Details</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+
+            <div class="card shadow-sm p-4">
+
+                <!-- Title -->
+                <h2 class="text-center mb-4">Item Details</h2>
+
+                <!-- Main Info -->
+                <table class="table table-bordered mb-3">
+                    <colgroup>
+                        <col style="width: 40%">
+                        <col style="width: 60%">
+                    </colgroup>
+
+                    <tr>
+                        <th>Code</th>
+                        <td>{{ item.code }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Category</th>
+                        <td>{{ item.category.name }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Gender</th>
+                        <td>{{ item.get_gender_display }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Size</th>
+                        <td>
+                            {% if item.size and item.size != "N/A" %}
+                                {{ item.size }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Added</th>
+                        <td>
+                            {{ item.created_at|date:"d M Y H:i" }}<br>
+                            <span class="text-muted small">
+                                {% if item.created_by %}
+                                    by {{ item.created_by.username }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if item.status == "available" %}
+                                <span class="badge bg-success">Available</span>
+                            {% elif item.status == "reserved" %}
+                                <span class="badge bg-warning text-dark">Reserved</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Given</span>
+                            {% endif %}
+
+                            <div class="text-muted small mt-1">
+                                {% if item.status == "given" and item.given_by %}
+                                    given by {{ item.given_by.username }}
+                                    {% if item.given_at %}
+                                        on {{ item.given_at|date:"d M Y H:i" }}
+                                    {% endif %}
+                                {% elif item.updated_at %}
+                                    last updated {{ item.updated_at|date:"d M Y H:i" }}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Reserved by</th>
+                        <td>
+                            {% if reservation and reservation.reserved_by %}
+                                {{ reservation.reserved_by.username }}<br>
+                                <span class="text-muted small">
+                                    on {{ reservation.created_at|date:"d M Y H:i" }}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                </table>
+
+
+                <!-- Reservation Details -->
+                {% if reservation %}
+                <h5 class="text-center mt-4 mb-3">Reservation Details</h5>
+
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Name</th>
+                        <td>{{ reservation.person }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Collection Date</th>
+                        <td>{{ reservation.reserved_for_date }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Notes</th>
+                        <td>{{ reservation.notes|default:"-" }}</td>
+                    </tr>
+                </table>
+                {% endif %}
+
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
+
+                    {% if item.status == "available" %}
+                        <a href="{% url 'reserve_item' item.id %}?{{ request.GET.urlencode }}"
+                           class="btn btn-success">
+                            Reserve
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary" disabled>Reserve</button>
+                    {% endif %}
+
+                    {% if item.status == "reserved" %}
+                        <a href="{% url 'release_item' item.id %}?{{ request.GET.urlencode }}"
+                           class="btn btn-warning">
+                            Release
+                        </a>
+
+                        <a href="{% url 'mark_given' item.id %}?{{ request.GET.urlencode }}"
+                           class="btn btn-dark">
+                            Given
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary" disabled>Release</button>
+                        <button class="btn btn-secondary" disabled>Given</button>
+                    {% endif %}
+
+                    {% if is_admin %}
+                    <button class="btn btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteModal">
+                        Delete
+                    </button>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- Back -->
+                <div class="text-center mt-4">
+                    <a href="{% url 'inventory' %}?{{ request.GET.urlencode }}"
+                       class="btn btn-outline-secondary">
+                        Back
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                Are you sure you want to delete item
+                <strong>{{ item.code }}</strong>?<br>
+                <span class="text-muted small">This action cannot be undone.</span>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <a href="{% url 'delete_item' item.id %}?{{ request.GET.urlencode }}"
+                   class="btn btn-danger">
+                    Delete
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,253 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Volunteer View</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        .content-wrap {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="container-fluid px-3 px-md-5 py-3">
+
+    <div class="content-wrap">
+
+        <!-- Header -->
+        <div class="text-center mb-3">
+
+            <!-- Title row -->
+            <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
+                <img src="{% static 'logo.jpeg' %}" alt="Logo" style="height: 40px;">
+                <h4 class="mb-0">UOS Inventory Manager</h4>
+                <span class="badge bg-dark px-3 py-2 shadow-sm"
+                      style="font-size: 0.9rem; border-radius: 8px; opacity: 0.85;">
+                    Beta [v0.1]
+                </span>
+            </div>
+
+            <!-- User controls -->
+            <div class="d-flex justify-content-center align-items-center gap-2">
+
+                <span class="text-muted small">
+                    Signed in as <strong>{{ request.user.username }}</strong> 👤
+                </span>
+
+                {% if is_admin %}
+                <a href="{% url 'inventory' %}" class="btn btn-outline-primary btn-sm">
+                    Admin
+                </a>
+                {% endif %}
+
+                <form method="post" action="{% url 'logout' %}" class="m-0">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-secondary btn-sm">
+                        Logout
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show">
+                {{ message }}
+                <button class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+
+
+        <!-- My Reservations -->
+        <h5 class="mb-2">My Reservations</h5>
+
+        {% for r in my_reservations %}
+        <div class="card p-2 mb-2 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+                    <strong>{{ r.item.category.name }}</strong><br>
+
+                    <span class="text-muted small">
+                        <span class="fw-semibold">ID:</span> {{ r.item.code }}
+                    </span>
+
+                    {% if r.item.size and r.item.size != "N/A" %}
+                    <br>
+                    <span class="text-muted small">
+                        <span class="fw-semibold">Size:</span> {{ r.item.get_size_label }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <a href="{% url 'view_item' r.item.id %}" class="btn btn-primary px-3 py-2">
+                    View
+                </a>
+
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No reservations yet</p>
+        {% endfor %}
+
+
+        <!-- Reservation Pagination -->
+        <div class="d-flex justify-content-center mb-3">
+            <ul class="pagination pagination-sm">
+
+                {% if res_page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?res_page={{ res_page_obj.previous_page_number }}">
+                        Prev
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        {{ res_page_obj.number }} / {{ res_page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if res_page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="?res_page={{ res_page_obj.next_page_number }}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+
+            </ul>
+        </div>
+
+
+        <!-- Items -->
+        <h5 class="mt-4 mb-3">Items</h5>
+
+        <!-- Toggle -->
+        <div class="btn-group mb-3 w-100">
+
+            <button id="btnAvailable"
+                class="btn {% if status_filter != 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                onclick="changeStatus('available')">
+                Available
+            </button>
+
+            <button id="btnReserved"
+                class="btn {% if status_filter == 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                onclick="changeStatus('reserved')">
+                Reserved
+            </button>
+
+        </div>
+
+
+        <!-- Search -->
+        <form class="mb-3" onsubmit="return false;">
+            <div class="input-group">
+                <span class="input-group-text">🔍</span>
+
+                <input type="text"
+                       id="searchInput"
+                       value="{{ search|default:'' }}"
+                       class="form-control"
+                       placeholder="Search items"
+                       autocomplete="off">
+            </div>
+        </form>
+
+
+        <!-- AJAX Items -->
+        <div id="itemList">
+            {% include "inventory/_item_list.html" %}
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const input = document.getElementById("searchInput");
+let timeout = null;
+
+function updateList(newStatus = null, page = 1) {
+
+    const params = new URLSearchParams(window.location.search);
+
+    params.set("search", input.value);
+
+    if (newStatus) {
+        params.set("status", newStatus);
+    }
+
+    params.set("page", page);
+
+    fetch("?" + params.toString(), {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("itemList").innerHTML = data.html;
+        window.history.replaceState({}, "", "?" + params.toString());
+        updateToggleButtons(params.get("status"));
+    });
+}
+
+input.addEventListener("input", function() {
+    clearTimeout(timeout);
+
+    timeout = setTimeout(() => {
+        updateList(null, 1);
+    }, 400);
+});
+
+function changeStatus(status) {
+    updateList(status, 1);
+}
+
+function goToPage(page) {
+    updateList(null, page);
+}
+
+function updateToggleButtons(status) {
+
+    const btnAvailable = document.getElementById("btnAvailable");
+    const btnReserved = document.getElementById("btnReserved");
+
+    btnAvailable.classList.remove("btn-primary");
+    btnReserved.classList.remove("btn-primary");
+
+    btnAvailable.classList.add("btn-outline-primary");
+    btnReserved.classList.add("btn-outline-primary");
+
+    if (status === "reserved") {
+        btnReserved.classList.add("btn-primary");
+        btnReserved.classList.remove("btn-outline-primary");
+    } else {
+        btnAvailable.classList.add("btn-primary");
+        btnAvailable.classList.remove("btn-outline-primary");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    updateToggleButtons("{{ status_filter }}");
+});
+</script>
+
+</body>
+</html>

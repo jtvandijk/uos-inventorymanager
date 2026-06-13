@@ -1,0 +1,76 @@
+<div class="row g-2">
+
+    {% for item in page_obj %}
+    <div class="col-12">
+
+        <div class="card p-3 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+
+                <!-- Item info -->
+                <div>
+                    <strong>{{ item.category.name }}</strong><br>
+
+                    <span class="text-muted small">
+                        <span class="fw-semibold">ID:</span> {{ item.code }}
+                    </span>
+
+                    {% if item.size and item.size != "N/A" %}
+                    <br>
+                    <span class="text-muted small">
+                        <span class="fw-semibold">Size:</span> {{ item.get_size_label }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Action -->
+                <a href="{% url 'view_item' item.id %}" class="btn btn-primary px-3 py-2">
+                    View
+                </a>
+
+            </div>
+        </div>
+
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p class="text-muted mb-0">No items found</p>
+    </div>
+    {% endfor %}
+
+</div>
+
+
+<!-- Pagination -->
+<div class="d-flex justify-content-center mt-4">
+
+    <nav>
+        <ul class="pagination pagination-sm">
+
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <button class="page-link"
+                        onclick="goToPage({{ page_obj.previous_page_number }})">
+                    Prev
+                </button>
+            </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">
+                    {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <button class="page-link"
+                        onclick="goToPage({{ page_obj.next_page_number }})">
+                    Next
+                </button>
+            </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+
+</div>
