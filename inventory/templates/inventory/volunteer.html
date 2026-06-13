@@ -138,21 +138,21 @@
     </div>
 </div>
 
-<!-- ✅ FIXED Bootstrap JS (THIS WAS BROKEN BEFORE) -->
+<!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 const input = document.getElementById("searchInput");
 let timeout = null;
 
-// ✅ Enable dismiss button
+// Enable dismiss button
 function initAlerts() {
     document.querySelectorAll('.alert').forEach(function(alert) {
         new bootstrap.Alert(alert);
     });
 }
 
-// ✅ Auto-dismiss after 10 sec
+// Auto-dismiss after 10 sec
 function autoDismissAlerts() {
     setTimeout(function () {
         document.querySelectorAll('.alert').forEach(function(alert) {
@@ -219,7 +219,7 @@ function updateToggleButtons(status) {
     }
 }
 
-// ✅ Initialise everything
+// Initialise everything
 document.addEventListener("DOMContentLoaded", function() {
     updateToggleButtons("{{ status_filter }}");
     initAlerts();

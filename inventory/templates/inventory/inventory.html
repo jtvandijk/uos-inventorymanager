@@ -13,7 +13,7 @@
 
 <div class="container py-4">
 
-    <!-- ✅ Messages -->
+    <!-- Messages -->
     {% if messages %}
         {% for message in messages %}
         <div class="alert alert-success alert-dismissible fade show mt-2">
@@ -116,32 +116,79 @@
                 <option value="given" {% if request.GET.status == "given" %}selected{% endif %}>Given</option>
             </select>
 
+            <input type="hidden" name="sort" value="{{ sort }}">
+
             <button type="submit" class="btn btn-primary">Filter</button>
             <a href="{% url 'inventory' %}" class="btn btn-outline-secondary">Reset</a>
 
         </form>
 
         {% if is_admin %}
-        <a href="{% url 'add_item' %}" class="btn btn-success">
+        <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success">
             + Add Item
         </a>
         {% endif %}
 
     </div>
 
-    <!-- Table (unchanged) -->
+    <!-- Table -->
     <table class="table table-bordered table-striped text-center align-middle">
-        <thead class="table-light">
-        <tr>
-            <th>ID</th>
-            <th>Category</th>
-            <th>Gender</th>
-            <th>Size</th>
-            <th>Status</th>
-            <th>Pickup</th>
-            <th>Details</th>
-        </tr>
-        </thead>
+
+    <thead class="table-light">
+    <tr>
+
+        <!-- ID -->
+        <th class="text-center">
+            <a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
+            class="text-decoration-none text-dark">
+                ID ▲▼
+            </a>
+        </th>
+
+        <!-- Category -->
+        <th class="text-center">
+            <a href="?sort={% if sort == 'category__name' %}-category__name{% else %}category__name{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
+            class="text-decoration-none text-dark">
+                Category ▲▼
+            </a>
+        </th>
+
+        <!-- Gender -->
+        <th class="text-center">
+            <a href="?sort={% if sort == 'gender' %}-gender{% else %}gender{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
+            class="text-decoration-none text-dark">
+                Gender ▲▼
+            </a>
+        </th>
+
+        <!-- Size -->
+        <th class="text-center">
+            <a href="?sort={% if sort == 'size' %}-size{% else %}size{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
+            class="text-decoration-none text-dark">
+                Size ▲▼
+            </a>
+        </th>
+
+        <!-- Status -->
+        <th class="text-center">
+            <a href="?sort={% if sort == 'status' %}-status{% else %}status{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
+            class="text-decoration-none text-dark">
+                Status ▲▼
+            </a>
+        </th>
+
+        <!-- Pickup -->
+        <th class="text-center">
+            <a href="?sort={% if sort == 'pickup' %}-pickup{% else %}pickup{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
+            class="text-decoration-none text-dark">
+                Pickup ▲▼
+            </a>
+        </th>
+
+        <th class="text-center">Details</th>
+
+    </tr>
+    </thead>
 
         <tbody>
         {% for item in page_obj %}
@@ -180,29 +227,66 @@
 
             <td>
                 <a href="{% url 'view_item' item.id %}?next=/inventory/&{{ request.GET.urlencode }}"
-                class="btn btn-primary btn-sm">
+                   class="btn btn-primary btn-sm">
                     View
                 </a>
             </td>
+
         </tr>
         {% endfor %}
         </tbody>
+
     </table>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+
+        <div class="text-muted">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </div>
+
+        <ul class="pagination mb-0">
+
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+
+        </ul>
+
+    </div>
 
 </div>
 
-<!-- ✅ CRITICAL: Bootstrap JS -->
+<!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-// ✅ Initialise dismiss buttons
 function initAlerts() {
     document.querySelectorAll('.alert').forEach(function(alert) {
         new bootstrap.Alert(alert);
     });
 }
 
-// ✅ Auto-dismiss after 10s
 function autoDismissAlerts() {
     setTimeout(function () {
         document.querySelectorAll('.alert').forEach(function(alert) {
@@ -214,7 +298,6 @@ function autoDismissAlerts() {
     }, 10000);
 }
 
-// ✅ Run once page loads
 document.addEventListener("DOMContentLoaded", function() {
     initAlerts();
     autoDismissAlerts();
