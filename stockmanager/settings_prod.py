@@ -3,7 +3,7 @@ from .settings import *
 # SECURITY
 DEBUG = False
 
-ALLOWED_HOSTS = ["178.79.153.239"]
+ALLOWED_HOSTS = ["178.79.153.239", "127.0.0.1", "localhost"]
 
 # STATIC FILES (required for production)
 STATIC_ROOT = BASE_DIR / "staticfiles"
