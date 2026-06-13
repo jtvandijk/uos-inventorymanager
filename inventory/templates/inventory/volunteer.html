@@ -23,7 +23,6 @@
         <!-- Header -->
         <div class="text-center mb-3">
 
-            <!-- Title row -->
             <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
                 <img src="{% static 'logo.jpeg' %}" alt="Logo" style="height: 40px;">
                 <h4 class="mb-0">UOS Inventory Manager</h4>
@@ -33,11 +32,9 @@
                 </span>
             </div>
 
-            <!-- User controls -->
             <div class="d-flex justify-content-center align-items-center gap-2">
-
                 <span class="text-muted small">
-                    Signed in as <strong>{{ request.user.username }}</strong> 👤
+                    Signed in as <strong>{{ request.user.username }}</strong>
                 </span>
 
                 {% if is_admin %}
@@ -48,21 +45,18 @@
 
                 <form method="post" action="{% url 'logout' %}" class="m-0">
                     {% csrf_token %}
-                    <button class="btn btn-outline-secondary btn-sm">
-                        Logout
-                    </button>
+                    <button class="btn btn-outline-secondary btn-sm">Logout</button>
                 </form>
-
             </div>
 
         </div>
 
-        <!-- Messages -->
+        <!-- ✅ Messages -->
         {% if messages %}
             {% for message in messages %}
-            <div class="alert alert-success alert-dismissible fade show">
+            <div class="alert alert-success alert-dismissible fade show mt-2">
                 {{ message }}
-                <button class="btn-close" data-bs-dismiss="alert"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
             {% endfor %}
         {% endif %}
@@ -90,7 +84,7 @@
                     {% endif %}
                 </div>
 
-                <a href="{% url 'view_item' r.item.id %}" class="btn btn-primary px-3 py-2">
+                <a href="{% url 'view_item' r.item.id %}?next=/inventory/volunteer/" class="btn btn-primary px-3 py-2">
                     View
                 </a>
 
@@ -99,38 +93,6 @@
         {% empty %}
         <p class="text-muted">No reservations yet</p>
         {% endfor %}
-
-
-        <!-- Reservation Pagination -->
-        <div class="d-flex justify-content-center mb-3">
-            <ul class="pagination pagination-sm">
-
-                {% if res_page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link"
-                       href="?res_page={{ res_page_obj.previous_page_number }}">
-                        Prev
-                    </a>
-                </li>
-                {% endif %}
-
-                <li class="page-item disabled">
-                    <span class="page-link">
-                        {{ res_page_obj.number }} / {{ res_page_obj.paginator.num_pages }}
-                    </span>
-                </li>
-
-                {% if res_page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link"
-                       href="?res_page={{ res_page_obj.next_page_number }}">
-                        Next
-                    </a>
-                </li>
-                {% endif %}
-
-            </ul>
-        </div>
 
 
         <!-- Items -->
@@ -153,7 +115,6 @@
 
         </div>
 
-
         <!-- Search -->
         <form class="mb-3" onsubmit="return false;">
             <div class="input-group">
@@ -168,34 +129,49 @@
             </div>
         </form>
 
-
         <!-- AJAX Items -->
         <div id="itemList">
             {% include "inventory/_item_list.html" %}
         </div>
 
     </div>
-
 </div>
 
-
+<!-- ✅ FIXED Bootstrap JS (THIS WAS BROKEN BEFORE) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 const input = document.getElementById("searchInput");
 let timeout = null;
 
-function updateList(newStatus = null, page = 1) {
+// ✅ Enable dismiss button
+function initAlerts() {
+    document.querySelectorAll('.alert').forEach(function(alert) {
+        new bootstrap.Alert(alert);
+    });
+}
 
+// ✅ Auto-dismiss after 10 sec
+function autoDismissAlerts() {
+    setTimeout(function () {
+        document.querySelectorAll('.alert').forEach(function(alert) {
+            if (alert.classList.contains('show')) {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 500);
+            }
+        });
+    }, 10000);
+}
+
+// AJAX list update
+function updateList(newStatus = null, page = 1) {
     const params = new URLSearchParams(window.location.search);
+    const currentNext = params.get("next") || "/inventory/volunteer/";
 
     params.set("search", input.value);
-
-    if (newStatus) {
-        params.set("status", newStatus);
-    }
-
+    if (newStatus) params.set("status", newStatus);
     params.set("page", page);
+    params.set("next", currentNext);
 
     fetch("?" + params.toString(), {
         headers: { "X-Requested-With": "XMLHttpRequest" }
@@ -203,29 +179,27 @@ function updateList(newStatus = null, page = 1) {
     .then(res => res.json())
     .then(data => {
         document.getElementById("itemList").innerHTML = data.html;
+
         window.history.replaceState({}, "", "?" + params.toString());
+
         updateToggleButtons(params.get("status"));
+
+        initAlerts();
     });
 }
 
+// Search debounce
 input.addEventListener("input", function() {
     clearTimeout(timeout);
-
-    timeout = setTimeout(() => {
-        updateList(null, 1);
-    }, 400);
+    timeout = setTimeout(() => updateList(null, 1), 400);
 });
 
+// Toggle
 function changeStatus(status) {
     updateList(status, 1);
 }
 
-function goToPage(page) {
-    updateList(null, page);
-}
-
 function updateToggleButtons(status) {
-
     const btnAvailable = document.getElementById("btnAvailable");
     const btnReserved = document.getElementById("btnReserved");
 
@@ -244,8 +218,11 @@ function updateToggleButtons(status) {
     }
 }
 
+// ✅ Initialise everything
 document.addEventListener("DOMContentLoaded", function() {
     updateToggleButtons("{{ status_filter }}");
+    initAlerts();
+    autoDismissAlerts();
 });
 </script>
 

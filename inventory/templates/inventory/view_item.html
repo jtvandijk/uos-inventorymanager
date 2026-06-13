@@ -134,8 +134,8 @@
                 <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
 
                     {% if item.status == "available" %}
-                        <a href="{% url 'reserve_item' item.id %}?{{ request.GET.urlencode }}"
-                           class="btn btn-success">
+                        <a href="{% url 'reserve_item' item.id %}?next={{ next }}"
+                        class="btn btn-success">
                             Reserve
                         </a>
                     {% else %}
@@ -143,12 +143,12 @@
                     {% endif %}
 
                     {% if item.status == "reserved" %}
-                        <a href="{% url 'release_item' item.id %}?{{ request.GET.urlencode }}"
+                        <a href="{% url 'release_item' item.id %}?{{ next }}"
                            class="btn btn-warning">
                             Release
                         </a>
 
-                        <a href="{% url 'mark_given' item.id %}?{{ request.GET.urlencode }}"
+                        <a href="{% url 'mark_given' item.id %}?{{ next }}"
                            class="btn btn-dark">
                             Given
                         </a>

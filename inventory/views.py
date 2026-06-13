@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, get_object_or_404, render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.template.loader import render_to_string
@@ -145,9 +145,12 @@ def view_item(request, item_id):
         status="reserved"
     ).first()
 
+    next_url = request.GET.get("next", "/inventory/")
+
     context = {
         "item": item,
         "reservation": reservation,
+        "next": next_url,  
     }
 
     return render(
@@ -165,8 +168,10 @@ def view_item(request, item_id):
 def reserve_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
+    next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/"
+
     if item.status != "available":
-        return redirect_with_filters(request)
+        return redirect(next_url)
 
     if request.method == "POST":
         form = ReservationForm(request.POST)
@@ -185,13 +190,14 @@ def reserve_item(request, item_id):
 
             messages.success(request, f"Item {item.code} reserved successfully")
 
-            return redirect_with_filters(request)
+            return redirect(next_url)
     else:
         form = ReservationForm()
 
     context = {
         "form": form,
         "item": item,
+        "next": next_url,
     }
 
     return render(
@@ -215,8 +221,7 @@ def release_item(request, item_id):
     ):
         reservation.delete()
 
-    return redirect_with_filters(request)
-
+    return redirect(request.GET.get("next") or "/inventory/")
 
 @login_required
 def mark_given(request, item_id):
@@ -231,7 +236,7 @@ def mark_given(request, item_id):
         item.updated_at = timezone.now()
         item.save()
 
-    return redirect_with_filters(request)
+    return redirect(request.GET.get("next", "/inventory/"))
 
 
 # ---------------------------
@@ -251,7 +256,7 @@ def add_item(request):
             item.updated_at = timezone.now()
             item.save()
 
-            return redirect("inventory")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
     else:
         form = ItemForm()
 
@@ -272,7 +277,8 @@ def add_item(request):
 def delete_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
     item.delete()
-    return redirect_with_filters(request)
+
+    return redirect(request.GET.get("next", "/inventory/"))
 
 
 # ---------------------------
@@ -331,16 +337,6 @@ def volunteer_view(request):
 # ---------------------------
 # Utilities
 # ---------------------------
-
-def redirect_with_filters(request):
-    query = request.GET.urlencode()
-    url = "/inventory/"
-
-    if query:
-        url += f"?{query}"
-
-    return redirect(url)
-
 
 def get_next_code(request):
     category_id = request.GET.get("category_id")
