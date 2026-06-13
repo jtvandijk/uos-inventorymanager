@@ -4,6 +4,7 @@ from .settings import *
 DEBUG = False
 
 ALLOWED_HOSTS = ["178.79.153.239", "127.0.0.1", "localhost"]
+CSRF_TRUSTED_ORIGINS = ["http://178.79.153.239"]
 
 # STATIC FILES (required for production)
 STATIC_ROOT = BASE_DIR / "staticfiles"
