@@ -63,4 +63,5 @@ class ReservationForm(forms.ModelForm):
             self.fields["reserved_for_date"].initial = date.today()
 
         self.fields["route"].queryset = Route.objects.all()
-        self.fields["route"].empty_label = "— No route —"
+        self.fields["route"].empty_label = "— Select a route —"
+        self.fields["route"].required = True

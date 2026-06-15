@@ -122,7 +122,8 @@
                 <option value="">Availability</option>
                 <option value="available" {% if request.GET.status == "available" %}selected{% endif %}>Available</option>
                 <option value="reserved" {% if request.GET.status == "reserved" %}selected{% endif %}>Reserved</option>
-                <option value="given" {% if request.GET.status == "given" %}selected{% endif %}>Given</option>
+                <option value="packed" {% if request.GET.status == "packed" %}selected{% endif %}>Packed</option>
+                <option value="given" {% if request.GET.status == "given" %}selected{% endif %}>Collected</option>
             </select>
 
             <input type="hidden" name="sort" value="{{ sort }}">
@@ -230,8 +231,10 @@
                     <span class="badge bg-success">Available</span>
                 {% elif item.status == "reserved" %}
                     <span class="badge bg-warning text-dark">Reserved</span>
+                {% elif item.status == "packed" %}
+                    <span class="badge bg-primary">Packed</span>
                 {% else %}
-                    <span class="badge bg-secondary">Given</span>
+                    <span class="badge bg-secondary">Collected</span>
                 {% endif %}
             </td>
 

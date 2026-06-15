@@ -214,12 +214,12 @@ def reserve_item(request, item_id):
 
 
 @login_required
-def release_item(request, item_id):
+def cancel_reservation(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
     reservation = Reservation.objects.filter(
         item=item,
-        status="reserved"
+        status__in=["reserved", "packed"],
     ).first()
 
     if reservation and (
@@ -229,11 +229,32 @@ def release_item(request, item_id):
 
     return redirect(request.GET.get("next") or "/inventory/")
 
+
 @login_required
-def mark_given(request, item_id):
+def pack_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/"
+
+    reservation = Reservation.objects.filter(
+        item=item,
+        status__in=["reserved", "packed"],
+    ).first()
+
+    if reservation:
+        reservation.status = "packed" if reservation.status == "reserved" else "reserved"
+        reservation.save()
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"status": reservation.status if reservation else ""})
+
+    return redirect(next_url)
+
+
+@login_required
+def collect_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
-    if item.status == "reserved":
+    if item.status in ("reserved", "packed"):
         Reservation.objects.filter(item=item).delete()
 
         item.status = "given"
@@ -357,7 +378,8 @@ def run_sheet_view(request):
     from datetime import date as date_type
 
     routes = Route.objects.all()
-    date_str = request.GET.get("date", "")
+    today = date_type.today().isoformat()
+    date_str = request.GET.get("date", today)
     route_id = request.GET.get("route", "")
 
     reservations = None
@@ -369,7 +391,7 @@ def run_sheet_view(request):
             selected_date = date_type.fromisoformat(date_str)
             qs = Reservation.objects.filter(
                 reserved_for_date=selected_date,
-                status="reserved",
+                status__in=["reserved", "packed"],
             ).select_related("item", "item__category", "route").order_by(
                 "item__category__name", "item__code"
             )

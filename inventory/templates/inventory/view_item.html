@@ -75,13 +75,15 @@
                                 <span class="badge bg-success">Available</span>
                             {% elif item.status == "reserved" %}
                                 <span class="badge bg-warning text-dark">Reserved</span>
+                            {% elif item.status == "packed" %}
+                                <span class="badge bg-primary">Packed</span>
                             {% else %}
-                                <span class="badge bg-secondary">Given</span>
+                                <span class="badge bg-secondary">Collected</span>
                             {% endif %}
 
                             <div class="text-muted small mt-1">
                                 {% if item.status == "given" and item.given_by %}
-                                    given by {{ item.given_by.username }}
+                                    collected by {{ item.given_by.username }}
                                     {% if item.given_at %}
                                         on {{ item.given_at|date:"d M Y H:i" }}
                                     {% endif %}
@@ -155,26 +157,32 @@
 
                     {% if item.status == "available" %}
                         <a href="{% url 'reserve_item' item.id %}?next={{ next }}"
-                        class="btn btn-success">
+                           class="btn btn-success">
                             Reserve
                         </a>
-                    {% else %}
-                        <button class="btn btn-secondary" disabled>Reserve</button>
                     {% endif %}
 
                     {% if item.status == "reserved" %}
-                        <a href="{% url 'release_item' item.id %}?next={{ next }}"
-                           class="btn btn-warning">
-                            Release
+                        <a href="{% url 'pack_item' item.id %}?next={{ next }}"
+                           class="btn btn-outline-primary">
+                            Mark as Packed
                         </a>
+                    {% elif item.status == "packed" %}
+                        <a href="{% url 'pack_item' item.id %}?next={{ next }}"
+                           class="btn btn-primary">
+                            Mark as Unpacked
+                        </a>
+                    {% endif %}
 
-                        <a href="{% url 'mark_given' item.id %}?next={{ next }}"
-                           class="btn btn-dark">
-                            Given
+                    {% if item.status == "reserved" or item.status == "packed" %}
+                        <a href="{% url 'cancel_reservation' item.id %}?next={{ next }}"
+                           class="btn btn-warning">
+                            Cancel Reservation
                         </a>
-                    {% else %}
-                        <button class="btn btn-secondary" disabled>Release</button>
-                        <button class="btn btn-secondary" disabled>Given</button>
+                        <a href="{% url 'collect_item' item.id %}?next={{ next }}"
+                           class="btn btn-dark">
+                            Mark as Collected
+                        </a>
                     {% endif %}
 
                     {% if is_admin %}

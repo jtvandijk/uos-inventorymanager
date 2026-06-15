@@ -75,6 +75,7 @@ class Item(models.Model):
         choices=[
             ("available", "Available"),
             ("reserved", "Reserved"),
+            ("packed", "Packed"),
             ("given", "Given"),
         ],
         default="available",
@@ -226,13 +227,8 @@ class Reservation(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
 
-        if self.status == "reserved":
-            self.item.status = "reserved"
-            self.item.updated_at = timezone.now()
-            self.item.save()
-
-        elif self.status == "given":
-            self.item.status = "given"
+        if self.status in ("reserved", "packed", "given"):
+            self.item.status = self.status
             self.item.updated_at = timezone.now()
             self.item.save()
 

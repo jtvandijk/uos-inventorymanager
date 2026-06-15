@@ -7,9 +7,10 @@ from .views import (
     reserve_item,
     delete_item,
     add_item,
-    release_item,
+    cancel_reservation,
+    pack_item,
+    collect_item,
     view_item,
-    mark_given,
     get_next_code,
     volunteer_view,
     run_sheet_view,
@@ -30,8 +31,9 @@ urlpatterns = [
     # ---------------------------
     path("item/<int:item_id>/", view_item, name="view_item"),
     path("reserve/<int:item_id>/", reserve_item, name="reserve_item"),
-    path("release/<int:item_id>/", release_item, name="release_item"),
-    path("given/<int:item_id>/", mark_given, name="mark_given"),
+    path("cancel/<int:item_id>/", cancel_reservation, name="cancel_reservation"),
+    path("pack/<int:item_id>/", pack_item, name="pack_item"),
+    path("collect/<int:item_id>/", collect_item, name="collect_item"),
 
     # ---------------------------
     # AJAX / Helpers
