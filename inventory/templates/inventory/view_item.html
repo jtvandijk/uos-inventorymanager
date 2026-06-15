@@ -145,7 +145,15 @@
 
                 <!-- Reservation Details -->
                 {% if reservation %}
-                <h2 class="mt-4 mb-3">Reservation Details</h2>
+                <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+                    <h2 class="mb-0">Reservation Details</h2>
+                    {% if is_admin or reservation.reserved_by == request.user %}
+                    <a href="{% url 'edit_reservation' reservation.id %}?next={{ next }}"
+                       class="btn btn-outline-secondary btn-sm">
+                        Edit
+                    </a>
+                    {% endif %}
+                </div>
 
                 <table class="table table-bordered">
                     <colgroup>

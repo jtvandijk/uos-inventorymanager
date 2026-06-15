@@ -200,6 +200,35 @@ def reserve_item(request, item_id):
 
 
 @login_required
+def edit_reservation(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+
+    if reservation.reserved_by != request.user and not is_admin(request.user):
+        return redirect("inventory")
+
+    item = reservation.item
+    next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/"
+
+    if request.method == "POST":
+        form = ReservationForm(request.POST, instance=reservation)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Reservation for {reservation.person} updated.")
+            from django.urls import reverse
+            return redirect(f"{reverse('view_item', args=[item.id])}?next={next_url}")
+    else:
+        form = ReservationForm(instance=reservation)
+
+    context = {
+        "form": form,
+        "item": item,
+        "reservation": reservation,
+        "next": next_url,
+    }
+    return render(request, "inventory/edit_reservation.html", add_role_context(request, context))
+
+
+@login_required
 def cancel_reservation(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
