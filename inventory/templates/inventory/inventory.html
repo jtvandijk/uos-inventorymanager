@@ -37,7 +37,6 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
-
             <span class="text-muted small">
                 Signed in as <strong>{{ request.user.username }}</strong>
             </span>
@@ -50,11 +49,8 @@
 
             <form method="post" action="{% url 'logout' %}" class="m-0">
                 {% csrf_token %}
-                <button class="btn btn-outline-secondary btn-sm">
-                    Logout
-                </button>
+                <button class="btn btn-outline-secondary btn-sm">Logout</button>
             </form>
-
         </div>
     </div>
 
@@ -66,236 +62,201 @@
                 <h4>{{ total_count }}</h4>
             </div>
         </div>
-
         <div class="col">
             <div class="card p-2">
-                <h6 class="text-success">Available Items</h6>
+                <h6 class="text-success">Available</h6>
                 <h4>{{ available_count }}</h4>
             </div>
         </div>
-
         <div class="col">
             <div class="card p-2">
-                <h6 class="text-warning">Reserved Items</h6>
+                <h6 class="text-warning">Reserved</h6>
                 <h4>{{ reserved_count }}</h4>
             </div>
         </div>
-
         <div class="col">
             <div class="card p-2">
-                <h6 class="text-muted">Given Items</h6>
+                <h6 class="text-muted">Collected</h6>
                 <h4>{{ given_count }}</h4>
             </div>
         </div>
     </div>
 
-    <!-- Filters + Search -->
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <!-- Filters -->
+    <form id="filterForm" method="get">
+        <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status|default:'' }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
 
-        <form method="get" class="d-flex flex-wrap gap-2 align-items-center flex-grow-1">
-
-            <!-- Free-text search: searches item code, category name, or reservation person name -->
+        <!-- Search + Gender -->
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
             <input type="text"
                    name="search"
+                   id="searchInput"
                    value="{{ request.GET.search|default:'' }}"
                    class="form-control"
                    placeholder="Search by code, category, or name…"
-                   style="max-width: 220px;">
+                   style="max-width: 260px;"
+                   autocomplete="off">
 
-            <select name="category" class="form-select" style="max-width: 160px;">
-                <option value="">Category</option>
-                {% for c in categories %}
-                <option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:"s" %}selected{% endif %}>
-                    {{ c.name }}
-                </option>
-                {% endfor %}
-            </select>
-
-            <select name="gender" class="form-select" style="max-width: 130px;">
-                <option value="">Gender</option>
-                <option value="male" {% if request.GET.gender == "male" %}selected{% endif %}>Male</option>
+            <select name="gender" id="genderSelect" class="form-select" style="max-width: 140px;">
+                <option value="">All genders</option>
+                <option value="male"   {% if request.GET.gender == "male"   %}selected{% endif %}>Male</option>
                 <option value="female" {% if request.GET.gender == "female" %}selected{% endif %}>Female</option>
                 <option value="unisex" {% if request.GET.gender == "unisex" %}selected{% endif %}>Unisex</option>
             </select>
 
-            <select name="status" class="form-select" style="max-width: 140px;">
-                <option value="">Availability</option>
-                <option value="available" {% if request.GET.status == "available" %}selected{% endif %}>Available</option>
-                <option value="reserved" {% if request.GET.status == "reserved" %}selected{% endif %}>Reserved</option>
-                <option value="packed" {% if request.GET.status == "packed" %}selected{% endif %}>Packed</option>
-                <option value="given" {% if request.GET.status == "given" %}selected{% endif %}>Collected</option>
-            </select>
+            {% if request.GET.search or request.GET.gender or request.GET.status %}
+            <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+            {% endif %}
+        </div>
 
-            <input type="hidden" name="sort" value="{{ sort }}">
+        <!-- Status pills -->
+        <div class="d-flex flex-wrap gap-1 mb-3">
+            <button type="button" class="btn btn-sm status-pill {% if not request.GET.status %}btn-dark{% else %}btn-outline-secondary{% endif %}" data-status="">Active</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'given' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" data-status="given">Collected</button>
+        </div>
+    </form>
 
-            <button type="submit" class="btn btn-primary">Filter</button>
-            <a href="{% url 'inventory' %}" class="btn btn-outline-secondary">Reset</a>
-
-        </form>
-
+    <!-- Actions row -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted small">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </span>
         {% if is_admin %}
-        <div class="d-flex gap-2 flex-shrink-0">
-            <a href="{% url 'run_sheet' %}" class="btn btn-outline-dark">
-                Run Sheet
-            </a>
-            <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success">
-                + Add Item
-            </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'run_sheet' %}" class="btn btn-outline-dark btn-sm">Run Sheet</a>
+            <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success btn-sm">+ Add Item</a>
         </div>
         {% endif %}
-
     </div>
 
-    <!-- Table — scrolls horizontally on small screens -->
+    <!-- Table -->
     <div class="table-responsive">
     <table class="table table-bordered table-striped text-center align-middle">
 
     <thead class="table-light">
     <tr>
 
-        <!-- ID -->
         <th class="text-center">
-            <a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
-            class="text-decoration-none text-dark">
-                ID ▲▼
-            </a>
+            <a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+               class="text-decoration-none text-dark">ID ▲▼</a>
         </th>
 
-        <!-- Category -->
         <th class="text-center">
-            <a href="?sort={% if sort == 'category__name' %}-category__name{% else %}category__name{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
-            class="text-decoration-none text-dark">
-                Category ▲▼
-            </a>
+            <a href="?sort={% if sort == 'category__name' %}-category__name{% else %}category__name{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+               class="text-decoration-none text-dark">Category ▲▼</a>
         </th>
 
-        <!-- Gender -->
         <th class="text-center">
-            <a href="?sort={% if sort == 'gender' %}-gender{% else %}gender{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
-            class="text-decoration-none text-dark">
-                Gender ▲▼
-            </a>
+            <a href="?sort={% if sort == 'gender' %}-gender{% else %}gender{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+               class="text-decoration-none text-dark">Gender ▲▼</a>
         </th>
 
-        <!-- Size -->
         <th class="text-center">
-            <a href="?sort={% if sort == 'size' %}-size{% else %}size{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
-            class="text-decoration-none text-dark">
-                Size ▲▼
-            </a>
+            <a href="?sort={% if sort == 'size' %}-size{% else %}size{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+               class="text-decoration-none text-dark">Size ▲▼</a>
         </th>
 
-        <!-- Status -->
         <th class="text-center">
-            <a href="?sort={% if sort == 'status' %}-status{% else %}status{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
-            class="text-decoration-none text-dark">
-                Status ▲▼
-            </a>
+            <a href="?sort={% if sort == 'status' %}-status{% else %}status{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+               class="text-decoration-none text-dark">Status ▲▼</a>
         </th>
 
-        <!-- Collection date -->
         <th class="text-center">
-            <a href="?sort={% if sort == 'pickup' %}-pickup{% else %}pickup{% endif %}&category={{ request.GET.category|default:''|striptags|cut:' ' }}&gender={{ request.GET.gender|default:''|striptags|cut:' ' }}&status={{ request.GET.status|default:''|striptags|cut:' ' }}"
-            class="text-decoration-none text-dark">
-                Collection Date ▲▼
-            </a>
+            <a href="?sort={% if sort == 'pickup' %}-pickup{% else %}pickup{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+               class="text-decoration-none text-dark">Collection Date ▲▼</a>
         </th>
 
-        <!-- Reserved For — person name on reservations -->
         <th class="text-center">Reserved For</th>
-
         <th class="text-center">Route</th>
-
         <th class="text-center">Details</th>
 
     </tr>
     </thead>
 
-        <tbody>
-        {% for item in page_obj %}
-        <tr>
-            <td>{{ item.code }}</td>
-            <td>{{ item.category.name }}</td>
-            <td>{{ item.get_gender_display }}</td>
+    <tbody>
+    {% for item in page_obj %}
+    <tr>
+        <td>{{ item.code }}</td>
+        <td>{{ item.category.name }}</td>
+        <td>{{ item.get_gender_display }}</td>
 
-            <td>
-                {% if item.size and item.size != "N/A" %}
-                    {{ item.size }}
-                {% else %}
-                    <span class="text-muted">N/A</span>
+        <td>
+            {% if item.size and item.size != "N/A" %}
+                {{ item.size }}
+            {% else %}
+                <span class="text-muted">N/A</span>
+            {% endif %}
+        </td>
+
+        <td>
+            {% if item.status == "available" %}
+                <span class="badge bg-success">Available</span>
+            {% elif item.status == "reserved" %}
+                <span class="badge bg-warning text-dark">Reserved</span>
+            {% elif item.status == "packed" %}
+                <span class="badge bg-primary">Packed</span>
+            {% else %}
+                <span class="badge bg-secondary">Collected</span>
+            {% endif %}
+        </td>
+
+        <td>
+            {% for res in item.reservation_set.all %}
+                {% if res.status == "reserved" or res.status == "packed" %}
+                    {{ res.reserved_for_date|date:"d M Y" }}
                 {% endif %}
-            </td>
+            {% empty %}
+                -
+            {% endfor %}
+        </td>
 
-            <td>
-                {% if item.status == "available" %}
-                    <span class="badge bg-success">Available</span>
-                {% elif item.status == "reserved" %}
-                    <span class="badge bg-warning text-dark">Reserved</span>
-                {% elif item.status == "packed" %}
-                    <span class="badge bg-primary">Packed</span>
-                {% else %}
-                    <span class="badge bg-secondary">Collected</span>
+        <td>
+            {% for res in item.reservation_set.all %}
+                {% if res.status == "reserved" or res.status == "packed" %}
+                    {{ res.person }}
                 {% endif %}
-            </td>
+            {% empty %}
+                <span class="text-muted">-</span>
+            {% endfor %}
+        </td>
 
-            <td>
-                {% for res in item.reservation_set.all %}
-                    {% if res.status == "reserved" %}
-                        {{ res.reserved_for_date|date:"d M Y" }}
+        <td>
+            {% for res in item.reservation_set.all %}
+                {% if res.status == "reserved" or res.status == "packed" %}
+                    {% if res.route %}
+                        <span class="badge"
+                              style="background-color: {{ res.route.color }}; color: {{ res.route.text_color }};">
+                            {{ res.route.name }}
+                        </span>
+                    {% else %}
+                        <span class="text-muted">-</span>
                     {% endif %}
-                {% empty %}
-                    -
-                {% endfor %}
-            </td>
+                {% endif %}
+            {% empty %}
+                <span class="text-muted">-</span>
+            {% endfor %}
+        </td>
 
-            <td>
-                {% for res in item.reservation_set.all %}
-                    {% if res.status == "reserved" %}
-                        {{ res.person }}
-                    {% endif %}
-                {% empty %}
-                    <span class="text-muted">-</span>
-                {% endfor %}
-            </td>
+        <td>
+            <a href="{% url 'view_item' item.id %}?next=/inventory/&{{ request.GET.urlencode }}"
+               class="btn btn-primary btn-sm">
+                View
+            </a>
+        </td>
 
-            <td>
-                {% for res in item.reservation_set.all %}
-                    {% if res.status == "reserved" %}
-                        {% if res.route %}
-                            <span class="badge"
-                                  style="background-color: {{ res.route.color }}; color: {{ res.route.text_color }};">
-                                {{ res.route.name }}
-                            </span>
-                        {% else %}
-                            <span class="text-muted">-</span>
-                        {% endif %}
-                    {% endif %}
-                {% empty %}
-                    <span class="text-muted">-</span>
-                {% endfor %}
-            </td>
-
-            <td>
-                <a href="{% url 'view_item' item.id %}?next=/inventory/&{{ request.GET.urlencode }}"
-                   class="btn btn-primary btn-sm">
-                    View
-                </a>
-            </td>
-
-        </tr>
-        {% endfor %}
-        </tbody>
+    </tr>
+    {% endfor %}
+    </tbody>
 
     </table>
-    </div><!-- /.table-responsive -->
+    </div>
 
     <!-- Pagination -->
-    <div class="d-flex justify-content-between align-items-center mt-3">
-
-        <div class="text-muted">
-            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
-        </div>
-
+    <div class="d-flex justify-content-end mt-3">
         <ul class="pagination mb-0">
 
             {% if page_obj.has_previous %}
@@ -308,9 +269,7 @@
 
             {% for num in page_obj.paginator.page_range %}
             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">
-                    {{ num }}
-                </a>
+                <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
             </li>
             {% endfor %}
 
@@ -323,15 +282,35 @@
             {% endif %}
 
         </ul>
-
     </div>
 
 </div>
 
-<!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+const filterForm = document.getElementById('filterForm');
+const statusInput = document.getElementById('statusInput');
+const searchInput = document.getElementById('searchInput');
+const genderSelect = document.getElementById('genderSelect');
+let searchTimeout;
+
+document.querySelectorAll('.status-pill').forEach(function(pill) {
+    pill.addEventListener('click', function() {
+        statusInput.value = this.dataset.status;
+        filterForm.submit();
+    });
+});
+
+genderSelect.addEventListener('change', function() {
+    filterForm.submit();
+});
+
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() { filterForm.submit(); }, 400);
+});
+
 function initAlerts() {
     document.querySelectorAll('.alert').forEach(function(alert) {
         new bootstrap.Alert(alert);
@@ -339,7 +318,7 @@ function initAlerts() {
 }
 
 function autoDismissAlerts() {
-    setTimeout(function () {
+    setTimeout(function() {
         document.querySelectorAll('.alert').forEach(function(alert) {
             if (alert.classList.contains('show')) {
                 alert.classList.remove('show');

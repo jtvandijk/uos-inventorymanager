@@ -117,13 +117,11 @@ def inventory_view(request):
     elif sort in allowed_sorts:
         items = items.order_by(sort)
 
-    paginator = Paginator(items, 20)
+    paginator = Paginator(items, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
     context = {
         "page_obj": page_obj,
-        "categories": Category.objects.all(),
-        "routes": Route.objects.all(),
         "total_count": Item.objects.count(),
         "available_count": Item.objects.filter(status="available").count(),
         "reserved_count": Item.objects.filter(status="reserved").count(),

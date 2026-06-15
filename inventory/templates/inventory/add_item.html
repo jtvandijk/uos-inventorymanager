@@ -18,12 +18,12 @@
 
             <div class="card shadow-sm p-4">
 
-                <!-- Title -->
-                <h2 class="text-center mb-4">Add Item</h2>
+                <h5 class="mb-4">Add Item</h5>
 
                 <!-- Code preview -->
-                <div id="code-preview" class="alert alert-info text-center fw-bold">
-                    Select a category to generate inventory ID
+                <div class="mb-4 pb-3 border-bottom text-center">
+                    <div class="text-muted small mb-1">Next inventory ID</div>
+                    <div id="code-preview" class="text-muted fst-italic">select a category</div>
                 </div>
 
                 <!-- Form -->
@@ -45,12 +45,11 @@
                         {{ form.size }}
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100">
+                    <button type="submit" class="btn btn-success w-100 mt-2">
                         Save Item
                     </button>
                 </form>
 
-                <!-- Back -->
                 <div class="text-center mt-3">
                     <a href="{% url 'inventory' %}" class="btn btn-outline-secondary">
                         Back
@@ -64,7 +63,6 @@
 
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -76,12 +74,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!categoryField || !sizeField) return;
 
-    // Update size options
     function updateSizes(categoryId) {
         fetch(`/inventory/get-sizes/?category_id=${categoryId}`)
             .then(res => res.json())
             .then(data => {
-
                 sizeField.innerHTML = "";
 
                 const defaultOption = document.createElement("option");
@@ -98,24 +94,23 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Update code preview
     function updateCodePreview(categoryId) {
         fetch(`/inventory/get-next-code/?category_id=${categoryId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.code) {
-                    preview.textContent = "New Item Code: " + data.code;
+                    preview.textContent = data.code;
+                    preview.className = "fw-bold font-monospace fs-4";
                 }
             });
     }
 
-    // On category change
     categoryField.addEventListener("change", function () {
-
         const categoryId = categoryField.value;
 
         if (!categoryId) {
-            preview.textContent = "Select a category to generate inventory ID";
+            preview.textContent = "select a category";
+            preview.className = "text-muted fst-italic";
             return;
         }
 
