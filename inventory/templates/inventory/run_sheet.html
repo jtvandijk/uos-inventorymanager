@@ -1,0 +1,175 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Run Sheet{% if selected_date %} — {{ selected_date|date:"d M Y" }}{% endif %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .card { border: 1px solid #dee2e6 !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 no-print">
+        <div class="d-flex align-items-center gap-2">
+            <img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px;">
+            <h4 class="mb-0">Run Sheet</h4>
+        </div>
+        <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-sm">
+            Back to Inventory
+        </a>
+    </div>
+
+    <!-- Filter form -->
+    <div class="card shadow-sm p-4 mb-4 no-print">
+        <form method="get" class="row g-3 align-items-end">
+
+            <div class="col-12 col-md-4">
+                <label class="form-label">Collection date</label>
+                <input type="date"
+                       name="date"
+                       value="{{ date_str }}"
+                       class="form-control">
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label class="form-label">Route</label>
+                <select name="route" class="form-select">
+                    <option value="">All routes</option>
+                    {% for r in routes %}
+                    <option value="{{ r.id }}" {% if route_id == r.id|stringformat:"s" %}selected{% endif %}>
+                        {{ r.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    View Run Sheet
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    {% if selected_date %}
+
+        <!-- Print header (only visible when printing) -->
+        <div class="d-none d-print-block mb-4">
+            <div class="d-flex align-items-center gap-3 mb-1">
+                <img src="{% static 'logo.png' %}" alt="Logo" style="height: 36px;">
+                <h4 class="mb-0">UOS Inventory Manager — Run Sheet</h4>
+            </div>
+            <div class="text-muted">
+                {{ selected_date|date:"l, d F Y" }}
+                {% if selected_route %} &mdash;
+                    <span style="background-color: {{ selected_route.color }}; color: {{ selected_route.text_color }}; padding: 2px 8px; border-radius: 4px;">
+                        {{ selected_route.name }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Run sheet heading -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h5 class="mb-0">
+                    {{ selected_date|date:"l, d F Y" }}
+                    {% if selected_route %}
+                        &mdash;
+                        <span class="badge"
+                              style="background-color: {{ selected_route.color }}; color: {{ selected_route.text_color }}; font-size: 1rem;">
+                            {{ selected_route.name }}
+                        </span>
+                    {% endif %}
+                </h5>
+                {% if reservations %}
+                    <span class="text-muted small">{{ reservations|length }} item{{ reservations|length|pluralize }} reserved</span>
+                {% endif %}
+            </div>
+            {% if reservations %}
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm no-print">
+                Print
+            </button>
+            {% endif %}
+        </div>
+
+        {% if reservations %}
+        <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Category</th>
+                    <th>Gender</th>
+                    <th>Size</th>
+                    <th>Reserved for</th>
+                    <th>Route</th>
+                    <th>Notes</th>
+                    <th class="no-print">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in reservations %}
+                <tr>
+                    <td class="fw-mono">{{ res.item.code }}</td>
+                    <td>{{ res.item.category.name }}</td>
+                    <td>{{ res.item.get_gender_display }}</td>
+                    <td>
+                        {% if res.item.size and res.item.size != "N/A" %}
+                            {{ res.item.size }}
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ res.person }}</td>
+                    <td>
+                        {% if res.route %}
+                            <span class="badge"
+                                  style="background-color: {{ res.route.color }}; color: {{ res.route.text_color }};">
+                                {{ res.route.name }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ res.notes|default:"-" }}</td>
+                    <td class="no-print">
+                        <a href="{% url 'view_item' res.item.id %}?next={% url 'run_sheet' %}%3Fdate%3D{{ date_str }}%26route%3D{{ route_id }}"
+                           class="btn btn-primary btn-sm">
+                            View
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+        {% else %}
+        <div class="alert alert-info">
+            No reservations found for this date{% if selected_route %} on the {{ selected_route.name }} route{% endif %}.
+        </div>
+        {% endif %}
+
+    {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

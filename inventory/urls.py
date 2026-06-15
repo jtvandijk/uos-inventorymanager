@@ -12,6 +12,7 @@ from .views import (
     mark_given,
     get_next_code,
     volunteer_view,
+    run_sheet_view,
 )
 
 
@@ -41,4 +42,9 @@ urlpatterns = [
     # Volunteer Interface
     # ---------------------------
     path("volunteer/", volunteer_view, name="volunteer"),
+
+    # ---------------------------
+    # Run Sheet
+    # ---------------------------
+    path("run-sheet/", run_sheet_view, name="run_sheet"),
 ]

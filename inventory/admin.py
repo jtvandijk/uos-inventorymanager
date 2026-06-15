@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 
-from .models import Item, Category, Reservation, SizeOption
+from .models import Item, Category, Reservation, SizeOption, Route
 
 
 # ---------------------------
@@ -41,7 +41,7 @@ class ItemAdmin(admin.ModelAdmin):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-    list_display = ("item", "person", "reserved_for_date", "status")
+    list_display = ("item", "person", "reserved_for_date", "route", "status")
 
     def save_model(self, request, obj, form, change):
         obj.full_clean()
@@ -85,3 +85,12 @@ class CategoryAdmin(admin.ModelAdmin):
 class SizeOptionAdmin(admin.ModelAdmin):
     list_display = ("value", "label", "size_type")
     list_filter = ("size_type",)
+
+
+# ---------------------------
+# Route Admin
+# ---------------------------
+
+@admin.register(Route)
+class RouteAdmin(admin.ModelAdmin):
+    list_display = ("name", "color", "text_color", "notes")

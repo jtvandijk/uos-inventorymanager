@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 
-from .models import Item, Reservation
+from .models import Item, Reservation, Route
 
 
 # ---------------------------
@@ -42,7 +42,7 @@ class ItemForm(forms.ModelForm):
 class ReservationForm(forms.ModelForm):
     class Meta:
         model = Reservation
-        fields = ["person", "reserved_for_date", "notes"]
+        fields = ["person", "reserved_for_date", "route", "notes"]
 
         widgets = {
             "person": forms.TextInput(attrs={"class": "form-control"}),
@@ -52,12 +52,15 @@ class ReservationForm(forms.ModelForm):
                     "type": "date",
                 }
             ),
+            "route": forms.Select(attrs={"class": "form-select"}),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Set default date for new reservations
         if not self.instance.pk:
             self.fields["reserved_for_date"].initial = date.today()
+
+        self.fields["route"].queryset = Route.objects.all()
+        self.fields["route"].empty_label = "— No route —"

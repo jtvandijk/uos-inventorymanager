@@ -5,6 +5,7 @@
     <title>Reserve Item</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -18,22 +19,62 @@
             <div class="card shadow-sm p-4">
 
                 <!-- Title -->
-                <h2 class="text-center mb-3">Reserve Item</h2>
+                <h2 class="text-center mb-4">Reserve Item</h2>
 
                 <!-- Item summary -->
-                <p class="text-center text-muted mb-4">
-                    {{ item.code }} • {{ item.category.name }}
-                    {% if item.size and item.size != "N/A" %}
-                        • {{ item.size }}
-                    {% endif %}
-                </p>
+                <table class="table table-bordered mb-4">
+                    <colgroup>
+                        <col style="width: 40%">
+                        <col style="width: 60%">
+                    </colgroup>
+
+                    <tr>
+                        <th>Code</th>
+                        <td>{{ item.code }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Category</th>
+                        <td><span class="badge bg-light text-dark border">{{ item.category.name }}</span></td>
+                    </tr>
+
+                    <tr>
+                        <th>Gender</th>
+                        <td>{{ item.get_gender_display }}</td>
+                    </tr>
+
+                    <tr>
+                        <th>Size</th>
+                        <td>
+                            {% if item.size and item.size != "N/A" %}
+                                {{ item.size }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if item.status == "available" %}
+                                <span class="badge bg-success">Available</span>
+                            {% elif item.status == "reserved" %}
+                                <span class="badge bg-warning text-dark">Reserved</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Given</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                </table>
 
                 <!-- Form -->
                 <form method="post">
                     {% csrf_token %}
 
                     <input type="hidden" name="next" value="{{ next }}">
-                    
+
                     <div class="mb-3">
                         <label for="id_person" class="form-label">Reserved for</label>
                         {{ form.person }}
@@ -42,6 +83,11 @@
                     <div class="mb-3">
                         <label for="id_reserved_for_date" class="form-label">Collection date</label>
                         {{ form.reserved_for_date }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_route" class="form-label">Route</label>
+                        {{ form.route }}
                     </div>
 
                     <div class="mb-3">
@@ -54,7 +100,7 @@
                     </button>
                 </form>
 
-                <!-- Back — returns to the page the volunteer came from -->
+                <!-- Back -->
                 <div class="text-center mt-3">
                     <a href="{{ next }}" class="btn btn-outline-secondary">
                         Back

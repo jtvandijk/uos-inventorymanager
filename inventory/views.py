@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.contrib import messages
 
-from .models import Category, SizeOption, Item, Reservation
+from .models import Category, SizeOption, Item, Reservation, Route
 from .forms import ItemForm, ReservationForm
 
 import re
@@ -123,6 +123,7 @@ def inventory_view(request):
     context = {
         "page_obj": page_obj,
         "categories": Category.objects.all(),
+        "routes": Route.objects.all(),
         "total_count": Item.objects.count(),
         "available_count": Item.objects.filter(status="available").count(),
         "reserved_count": Item.objects.filter(status="reserved").count(),
@@ -340,6 +341,59 @@ def volunteer_view(request):
     return render(
         request,
         "inventory/volunteer.html",
+        add_role_context(request, context),
+    )
+
+
+# ---------------------------
+# Run Sheet
+# ---------------------------
+
+@login_required
+def run_sheet_view(request):
+    if not is_admin(request.user):
+        return redirect("volunteer")
+
+    from datetime import date as date_type
+
+    routes = Route.objects.all()
+    date_str = request.GET.get("date", "")
+    route_id = request.GET.get("route", "")
+
+    reservations = None
+    selected_date = None
+    selected_route = None
+
+    if date_str:
+        try:
+            selected_date = date_type.fromisoformat(date_str)
+            qs = Reservation.objects.filter(
+                reserved_for_date=selected_date,
+                status="reserved",
+            ).select_related("item", "item__category", "route").order_by(
+                "item__category__name", "item__code"
+            )
+
+            if route_id:
+                qs = qs.filter(route_id=route_id)
+                selected_route = routes.filter(id=route_id).first()
+
+            reservations = qs
+        except ValueError:
+            pass
+
+    context = {
+        "routes": routes,
+        "reservations": reservations,
+        "selected_date": selected_date,
+        "selected_route": selected_route,
+        "date_str": date_str,
+        "route_id": route_id,
+    }
+
+    return render(
+        request,
+        "inventory/run_sheet.html",
         add_role_context(request, context),
     )
 

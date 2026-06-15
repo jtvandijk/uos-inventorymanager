@@ -7,6 +7,23 @@ import re
 
 
 # ---------------------------
+# Route
+# ---------------------------
+
+class Route(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    color = models.CharField(max_length=7, default="#343a40")
+    text_color = models.CharField(max_length=7, default="#ffffff")
+    notes = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+# ---------------------------
 # Category
 # ---------------------------
 
@@ -157,6 +174,14 @@ class Reservation(models.Model):
     person = models.CharField(max_length=100)
     reserved_for_date = models.DateField()
     notes = models.TextField(blank=True)
+
+    route = models.ForeignKey(
+        "Route",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reservations",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
