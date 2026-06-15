@@ -5,6 +5,7 @@ from .views import (
     inventory_view,
     get_sizes,
     reserve_item,
+    edit_item,
     delete_item,
     add_item,
     add_item_confirm,
@@ -32,6 +33,7 @@ urlpatterns = [
     # Item Actions
     # ---------------------------
     path("item/<int:item_id>/", view_item, name="view_item"),
+    path("item/<int:item_id>/edit/", edit_item, name="edit_item"),
     path("reserve/<int:item_id>/", reserve_item, name="reserve_item"),
     path("cancel/<int:item_id>/", cancel_reservation, name="cancel_reservation"),
     path("pack/<int:item_id>/", pack_item, name="pack_item"),

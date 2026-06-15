@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.contrib import messages
 
 from .models import Category, SizeOption, Item, Reservation, Route
-from .forms import ItemForm, ReservationForm
+from .forms import ItemForm, ItemEditForm, ReservationForm
 
 import re
 
@@ -134,7 +134,7 @@ def view_item(request, item_id):
 
     reservation = Reservation.objects.filter(
         item=item,
-        status="reserved"
+        status__in=["reserved", "packed"],
     ).first()
 
     next_url = request.GET.get("next", "/inventory/")
@@ -308,6 +308,32 @@ def add_item_confirm(request):
         "inventory/add_item_confirm.html",
         add_role_context(request, context),
     )
+
+
+@user_passes_test(is_admin)
+@login_required
+def edit_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/"
+
+    if request.method == "POST":
+        form = ItemEditForm(request.POST, instance=item)
+        if form.is_valid():
+            updated = form.save(commit=False)
+            updated.updated_at = timezone.now()
+            updated.save()
+            messages.success(request, f"Item {item.code} updated.")
+            from django.urls import reverse
+            return redirect(f"{reverse('view_item', args=[item_id])}?next={next_url}")
+    else:
+        form = ItemEditForm(instance=item)
+
+    context = {
+        "form": form,
+        "item": item,
+        "next": next_url,
+    }
+    return render(request, "inventory/edit_item.html", add_role_context(request, context))
 
 
 @user_passes_test(is_admin)

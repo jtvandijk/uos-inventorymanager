@@ -18,8 +18,16 @@
 
             <div class="card shadow-sm p-4">
 
-                <!-- Title -->
-                <h2 class="text-center mb-4">Item Details</h2>
+                <!-- Title + Edit -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Item Details</h2>
+                    {% if is_admin %}
+                    <a href="{% url 'edit_item' item.id %}?next={{ next }}"
+                       class="btn btn-outline-secondary btn-sm">
+                        Edit
+                    </a>
+                    {% endif %}
+                </div>
 
                 <!-- Main Info -->
                 <table class="table table-bordered mb-3">
@@ -110,10 +118,34 @@
 
                 </table>
 
+                <!-- Item-level actions -->
+                {% if item.status == "available" %}
+                <div class="d-flex justify-content-end mt-2 mb-2">
+                    <a href="{% url 'reserve_item' item.id %}?next={{ next }}"
+                       class="btn btn-success">
+                        Reserve
+                    </a>
+                </div>
+                {% elif item.status == "reserved" and is_admin %}
+                <div class="d-flex justify-content-end mt-2 mb-2">
+                    <a href="{% url 'pack_item' item.id %}?next={{ next }}"
+                       class="btn btn-primary">
+                        Mark as Packed
+                    </a>
+                </div>
+                {% elif item.status == "packed" and is_admin %}
+                <div class="d-flex justify-content-end mt-2 mb-2">
+                    <a href="{% url 'pack_item' item.id %}?next={{ next }}"
+                       class="btn btn-outline-primary">
+                        Mark as Unpacked
+                    </a>
+                </div>
+                {% endif %}
+
 
                 <!-- Reservation Details -->
                 {% if reservation %}
-                <h2 class="text-center mt-4 mb-3">Reservation Details</h2>
+                <h2 class="mt-4 mb-3">Reservation Details</h2>
 
                 <table class="table table-bordered">
                     <colgroup>
@@ -149,58 +181,36 @@
                         <td>{{ reservation.notes|default:"-" }}</td>
                     </tr>
                 </table>
+
+                <!-- Reservation-level actions -->
+                <div class="d-flex justify-content-end gap-2 mt-2">
+                    {% if is_admin or reservation.reserved_by == request.user %}
+                    <button class="btn btn-warning"
+                            data-bs-toggle="modal"
+                            data-bs-target="#cancelModal">
+                        Cancel Reservation
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'collect_item' item.id %}?next={{ next }}"
+                       class="btn btn-secondary">
+                        Item Collected
+                    </a>
+                </div>
                 {% endif %}
 
 
-                <!-- Actions -->
-                <div class="d-flex justify-content-center gap-2 mt-4 flex-wrap">
-
-                    {% if item.status == "available" %}
-                        <a href="{% url 'reserve_item' item.id %}?next={{ next }}"
-                           class="btn btn-success">
-                            Reserve
-                        </a>
-                    {% endif %}
-
-                    {% if item.status == "reserved" %}
-                        <a href="{% url 'pack_item' item.id %}?next={{ next }}"
-                           class="btn btn-outline-primary">
-                            Mark as Packed
-                        </a>
-                    {% elif item.status == "packed" %}
-                        <a href="{% url 'pack_item' item.id %}?next={{ next }}"
-                           class="btn btn-primary">
-                            Mark as Unpacked
-                        </a>
-                    {% endif %}
-
-                    {% if item.status == "reserved" or item.status == "packed" %}
-                        <a href="{% url 'cancel_reservation' item.id %}?next={{ next }}"
-                           class="btn btn-warning">
-                            Cancel Reservation
-                        </a>
-                        <a href="{% url 'collect_item' item.id %}?next={{ next }}"
-                           class="btn btn-dark">
-                            Mark as Collected
-                        </a>
-                    {% endif %}
-
+                <!-- Footer: Back + Delete -->
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ next }}" class="btn btn-outline-secondary">
+                        Back
+                    </a>
                     {% if is_admin %}
-                    <button class="btn btn-danger"
+                    <button class="btn btn-outline-danger btn-sm"
                             data-bs-toggle="modal"
                             data-bs-target="#deleteModal">
                         Delete
                     </button>
                     {% endif %}
-
-                </div>
-
-
-                <!-- Back — returns to wherever the user came from (volunteer or admin) -->
-                <div class="text-center mt-4">
-                    <a href="{{ next }}" class="btn btn-outline-secondary">
-                        Back
-                    </a>
                 </div>
 
             </div>
@@ -208,6 +218,39 @@
         </div>
     </div>
 </div>
+
+
+<!-- Cancel Reservation Modal -->
+{% if reservation %}
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Reservation</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                Are you sure you want to cancel the reservation for
+                <strong>{{ reservation.person }}</strong>?<br>
+                <span class="text-muted small">The item will become available again.</span>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                    Keep Reservation
+                </button>
+                <a href="{% url 'cancel_reservation' item.id %}?next={{ next }}"
+                   class="btn btn-warning">
+                    Yes, Cancel It
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endif %}
 
 
 <!-- Delete Modal -->

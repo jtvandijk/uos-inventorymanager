@@ -43,6 +43,22 @@ class ItemForm(forms.ModelForm):
 
 
 # ---------------------------
+# Item Edit Form (admin only — no quantity field)
+# ---------------------------
+
+class ItemEditForm(forms.ModelForm):
+    class Meta:
+        model = Item
+        fields = ["category", "gender", "size"]
+
+        widgets = {
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "gender": forms.Select(attrs={"class": "form-select"}),
+            "size": forms.Select(attrs={"class": "form-select"}),
+        }
+
+
+# ---------------------------
 # Reservation Form
 # ---------------------------
 
