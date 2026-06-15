@@ -18,6 +18,16 @@
 
             <div class="card shadow-sm p-4">
 
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-success alert-dismissible fade show mb-3 py-2">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
                 <!-- Title + Edit -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="mb-0">Item Details</h2>
@@ -91,7 +101,7 @@
 
                             <div class="text-muted small mt-1">
                                 {% if item.status == "given" and item.given_by %}
-                                    collected by {{ item.given_by.username }}
+                                    marked as collected by {{ item.given_by.username }}
                                     {% if item.given_at %}
                                         on {{ item.given_at|date:"d M Y H:i" }}
                                     {% endif %}
@@ -119,23 +129,24 @@
                 </table>
 
                 <!-- Item-level actions -->
+                {% url 'view_item' item.id as item_url %}
                 {% if item.status == "available" %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'reserve_item' item.id %}?next={{ next }}"
+                    <a href="{% url 'reserve_item' item.id %}?next={{ item_url }}?next={{ next }}"
                        class="btn btn-success">
                         Reserve
                     </a>
                 </div>
                 {% elif item.status == "reserved" and is_admin %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'pack_item' item.id %}?next={{ next }}"
+                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next }}"
                        class="btn btn-primary">
                         Mark as Packed
                     </a>
                 </div>
                 {% elif item.status == "packed" and is_admin %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'pack_item' item.id %}?next={{ next }}"
+                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next }}"
                        class="btn btn-outline-primary">
                         Mark as Unpacked
                     </a>
@@ -199,7 +210,7 @@
                         Cancel Reservation
                     </button>
                     {% endif %}
-                    <a href="{% url 'collect_item' item.id %}?next={{ next }}"
+                    <a href="{% url 'collect_item' item.id %}?next={{ item_url }}?next={{ next }}"
                        class="btn btn-secondary">
                         Item Collected
                     </a>
@@ -249,7 +260,7 @@
                 <button class="btn btn-secondary" data-bs-dismiss="modal">
                     Keep Reservation
                 </button>
-                <a href="{% url 'cancel_reservation' item.id %}?next={{ next }}"
+                <a href="{% url 'cancel_reservation' item.id %}?next={{ item_url }}?next={{ next }}"
                    class="btn btn-warning">
                     Yes, Cancel It
                 </a>
@@ -293,6 +304,19 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(function () {
+        document.querySelectorAll('.alert').forEach(function (el) {
+            if (el.classList.contains('show')) {
+                el.classList.remove('show');
+                setTimeout(() => el.remove(), 300);
+            }
+        });
+    }, 5000);
+});
+</script>
 
 </body>
 </html>

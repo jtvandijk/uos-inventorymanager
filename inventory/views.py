@@ -241,6 +241,7 @@ def cancel_reservation(request, item_id):
         reservation.reserved_by == request.user or is_admin(request.user)
     ):
         reservation.delete()
+        messages.success(request, "Reservation cancelled.")
 
     return redirect(request.GET.get("next") or "/inventory/")
 
@@ -256,8 +257,10 @@ def pack_item(request, item_id):
     ).first()
 
     if reservation:
-        reservation.status = "packed" if reservation.status == "reserved" else "reserved"
+        new_status = "packed" if reservation.status == "reserved" else "reserved"
+        reservation.status = new_status
         reservation.save()
+        messages.success(request, f"Item marked as {'packed' if new_status == 'packed' else 'unpacked'}.")
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         return JsonResponse({"status": reservation.status if reservation else ""})
@@ -277,6 +280,8 @@ def collect_item(request, item_id):
         item.given_at = timezone.now()
         item.updated_at = timezone.now()
         item.save()
+
+        messages.success(request, f"Item {item.code} collected.")
 
     return redirect(request.GET.get("next", "/inventory/"))
 
