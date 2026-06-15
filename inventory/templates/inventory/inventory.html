@@ -54,13 +54,22 @@
         </div>
     </div>
 
-    <!-- Filters -->
+    <!-- Actions row -->
+    <div class="d-flex justify-content-end mb-3">
+        {% if is_admin %}
+        <div class="d-flex gap-2">
+            <a href="{% url 'run_sheet' %}" class="btn btn-outline-dark btn-sm">Run Sheet</a>
+            <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success btn-sm">+ Add Item</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Search (directly above table) -->
     <form id="filterForm" method="get">
         <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status|default:'' }}">
         <input type="hidden" name="sort" value="{{ sort }}">
 
-        <!-- Search -->
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <div class="d-flex align-items-center gap-2 mb-2">
             <input type="text"
                    name="search"
                    id="searchInput"
@@ -74,28 +83,7 @@
             <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
             {% endif %}
         </div>
-
-        <!-- Status pills -->
-        <div class="d-flex flex-wrap gap-1 mb-3">
-            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
-            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
-            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
-            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'given' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" data-status="given">Collected</button>
-        </div>
     </form>
-
-    <!-- Actions row -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted small">
-            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
-        </span>
-        {% if is_admin %}
-        <div class="d-flex gap-2">
-            <a href="{% url 'run_sheet' %}" class="btn btn-outline-dark btn-sm">Run Sheet</a>
-            <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success btn-sm">+ Add Item</a>
-        </div>
-        {% endif %}
-    </div>
 
     <!-- Table -->
     <div class="table-responsive" style="min-height: 420px;">
@@ -219,8 +207,11 @@
     </table>
     </div>
 
-    <!-- Pagination -->
-    <div class="d-flex justify-content-end mt-3">
+    <!-- Count + Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+        <span class="text-muted small">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
+        </span>
         <ul class="pagination mb-0">
 
             {% if page_obj.has_previous %}
@@ -246,6 +237,15 @@
             {% endif %}
 
         </ul>
+    </div>
+
+    <!-- Status pills -->
+    <div class="d-flex flex-wrap gap-1 pt-2 border-top">
+        <span class="text-muted small me-1 align-self-center">Filter:</span>
+        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
+        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
+        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
+        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'given' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" data-status="given">Collected</button>
     </div>
 
 </div>

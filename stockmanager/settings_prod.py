@@ -3,8 +3,8 @@ from .settings import *
 # SECURITY
 DEBUG = False
 
-ALLOWED_HOSTS = ["178.79.153.239", "127.0.0.1", "localhost"]
-CSRF_TRUSTED_ORIGINS = ["http://178.79.153.239"]
+ALLOWED_HOSTS = ["178.79.153.239", "127.0.0.1", "localhost", "uos-inventory.duckdns.org"]
+CSRF_TRUSTED_ORIGINS = ["http://178.79.153.239", "https://uos-inventory.duckdns.org"]
 
 # STATIC FILES (required for production)
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -16,4 +16,4 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Nginx
 USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
