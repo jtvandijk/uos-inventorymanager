@@ -216,7 +216,7 @@
 
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ request.GET.status|default:'' }}&sort={{ sort }}&search={{ request.GET.search|default:''|urlencode }}">
                     Previous
                 </a>
             </li>
@@ -224,13 +224,13 @@
 
             {% for num in page_obj.paginator.page_range %}
             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}&status={{ request.GET.status|default:'' }}&sort={{ sort }}&search={{ request.GET.search|default:''|urlencode }}">{{ num }}</a>
             </li>
             {% endfor %}
 
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&status={{ request.GET.status|default:'' }}&sort={{ sort }}&search={{ request.GET.search|default:''|urlencode }}">
                     Next
                 </a>
             </li>
