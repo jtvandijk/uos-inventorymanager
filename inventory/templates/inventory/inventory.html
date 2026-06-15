@@ -54,65 +54,29 @@
         </div>
     </div>
 
-    <!-- Dashboard -->
-    <div class="row text-center mb-4">
-        <div class="col">
-            <div class="card p-2">
-                <h6>Total Items</h6>
-                <h4>{{ total_count }}</h4>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card p-2">
-                <h6 class="text-success">Available</h6>
-                <h4>{{ available_count }}</h4>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card p-2">
-                <h6 class="text-warning">Reserved</h6>
-                <h4>{{ reserved_count }}</h4>
-            </div>
-        </div>
-        <div class="col">
-            <div class="card p-2">
-                <h6 class="text-muted">Collected</h6>
-                <h4>{{ given_count }}</h4>
-            </div>
-        </div>
-    </div>
-
     <!-- Filters -->
     <form id="filterForm" method="get">
         <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status|default:'' }}">
         <input type="hidden" name="sort" value="{{ sort }}">
 
-        <!-- Search + Gender -->
+        <!-- Search -->
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
             <input type="text"
                    name="search"
                    id="searchInput"
                    value="{{ request.GET.search|default:'' }}"
                    class="form-control"
-                   placeholder="Search by code, category, or name…"
+                   placeholder="Search inventory…"
                    style="max-width: 260px;"
                    autocomplete="off">
 
-            <select name="gender" id="genderSelect" class="form-select" style="max-width: 140px;">
-                <option value="">All genders</option>
-                <option value="male"   {% if request.GET.gender == "male"   %}selected{% endif %}>Male</option>
-                <option value="female" {% if request.GET.gender == "female" %}selected{% endif %}>Female</option>
-                <option value="unisex" {% if request.GET.gender == "unisex" %}selected{% endif %}>Unisex</option>
-            </select>
-
-            {% if request.GET.search or request.GET.gender or request.GET.status %}
+            {% if request.GET.search or request.GET.status %}
             <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
             {% endif %}
         </div>
 
         <!-- Status pills -->
         <div class="d-flex flex-wrap gap-1 mb-3">
-            <button type="button" class="btn btn-sm status-pill {% if not request.GET.status %}btn-dark{% else %}btn-outline-secondary{% endif %}" data-status="">Active</button>
             <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
             <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
             <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
@@ -134,39 +98,39 @@
     </div>
 
     <!-- Table -->
-    <div class="table-responsive">
+    <div class="table-responsive" style="min-height: 420px;">
     <table class="table table-bordered table-striped text-center align-middle">
 
     <thead class="table-light">
     <tr>
 
         <th class="text-center">
-            <a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+            <a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
                class="text-decoration-none text-dark">ID ▲▼</a>
         </th>
 
         <th class="text-center">
-            <a href="?sort={% if sort == 'category__name' %}-category__name{% else %}category__name{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+            <a href="?sort={% if sort == 'category__name' %}-category__name{% else %}category__name{% endif %}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
                class="text-decoration-none text-dark">Category ▲▼</a>
         </th>
 
         <th class="text-center">
-            <a href="?sort={% if sort == 'gender' %}-gender{% else %}gender{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+            <a href="?sort={% if sort == 'gender' %}-gender{% else %}gender{% endif %}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
                class="text-decoration-none text-dark">Gender ▲▼</a>
         </th>
 
         <th class="text-center">
-            <a href="?sort={% if sort == 'size' %}-size{% else %}size{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+            <a href="?sort={% if sort == 'size' %}-size{% else %}size{% endif %}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
                class="text-decoration-none text-dark">Size ▲▼</a>
         </th>
 
         <th class="text-center">
-            <a href="?sort={% if sort == 'status' %}-status{% else %}status{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+            <a href="?sort={% if sort == 'status' %}-status{% else %}status{% endif %}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
                class="text-decoration-none text-dark">Status ▲▼</a>
         </th>
 
         <th class="text-center">
-            <a href="?sort={% if sort == 'pickup' %}-pickup{% else %}pickup{% endif %}&gender={{ request.GET.gender|default:'' }}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
+            <a href="?sort={% if sort == 'pickup' %}-pickup{% else %}pickup{% endif %}&status={{ request.GET.status|default:'' }}&search={{ request.GET.search|default:''|urlencode }}"
                class="text-decoration-none text-dark">Collection Date ▲▼</a>
         </th>
 
@@ -292,18 +256,15 @@
 const filterForm = document.getElementById('filterForm');
 const statusInput = document.getElementById('statusInput');
 const searchInput = document.getElementById('searchInput');
-const genderSelect = document.getElementById('genderSelect');
 let searchTimeout;
 
 document.querySelectorAll('.status-pill').forEach(function(pill) {
     pill.addEventListener('click', function() {
-        statusInput.value = this.dataset.status;
+        const newStatus = this.dataset.status;
+        // Toggle off if already active
+        statusInput.value = (statusInput.value === newStatus) ? '' : newStatus;
         filterForm.submit();
     });
-});
-
-genderSelect.addEventListener('change', function() {
-    filterForm.submit();
 });
 
 searchInput.addEventListener('input', function() {

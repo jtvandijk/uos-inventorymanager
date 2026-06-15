@@ -74,7 +74,10 @@ class ReservationAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "size_type")
+    list_display = ("name", "code", "size_type")
+
+    class Media:
+        js = ("inventory/category_admin.js",)
 
 
 # ---------------------------

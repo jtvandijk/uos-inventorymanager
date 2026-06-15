@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Items Added</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .card { box-shadow: none !important; border: none !important; }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+
+            <div class="card shadow-sm p-4">
+
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <h5 class="mb-0">
+                        {% if codes|length == 1 %}Item Added{% else %}{{ codes|length }} Items Added{% endif %}
+                    </h5>
+                    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm no-print">Print</button>
+                </div>
+
+                <p class="text-muted small mb-4">
+                    Write the code{{ codes|length|pluralize }} below on a sticker and attach to the item{{ codes|length|pluralize }}.
+                </p>
+
+                <div class="d-flex flex-column gap-2 mb-4">
+                    {% for code in codes %}
+                    <div class="border rounded px-3 py-2 bg-white text-center">
+                        <span class="font-monospace fw-bold fs-4">{{ code }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-grid gap-2 no-print">
+                    <a href="{% url 'add_item' %}" class="btn btn-success">
+                        Add More Items
+                    </a>
+                    <a href="{% url 'inventory' %}" class="btn btn-outline-secondary">
+                        Back to Inventory
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

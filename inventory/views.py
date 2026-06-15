@@ -77,17 +77,9 @@ def inventory_view(request):
 
     items = Item.objects.select_related("category").prefetch_related("reservation_set")
 
-    category = request.GET.get("category")
-    gender = request.GET.get("gender")
     status = request.GET.get("status")
     search = request.GET.get("search")
     sort = request.GET.get("sort", "code")
-
-    if category:
-        items = items.filter(category_id=category)
-
-    if gender:
-        items = items.filter(gender=gender)
 
     if status:
         items = items.filter(status=status)
@@ -122,10 +114,6 @@ def inventory_view(request):
 
     context = {
         "page_obj": page_obj,
-        "total_count": Item.objects.count(),
-        "available_count": Item.objects.filter(status="available").count(),
-        "reserved_count": Item.objects.filter(status="reserved").count(),
-        "given_count": Item.objects.filter(status="given").count(),
         "sort": sort,
     }
 
@@ -276,23 +264,48 @@ def add_item(request):
         form = ItemForm(request.POST)
 
         if form.is_valid():
-            item = form.save(commit=False)
-            item.created_by = request.user
-            item.updated_at = timezone.now()
-            item.save()
+            quantity = form.cleaned_data["quantity"]
+            category = form.cleaned_data["category"]
+            gender = form.cleaned_data["gender"]
+            size = form.cleaned_data.get("size", "")
 
-            return redirect('inventory')
+            created_codes = []
+            for _ in range(quantity):
+                item = Item(
+                    category=category,
+                    gender=gender,
+                    size=size,
+                    created_by=request.user,
+                    updated_at=timezone.now(),
+                )
+                item.save()
+                created_codes.append(item.code)
+
+            from django.urls import reverse
+            codes_param = ",".join(created_codes)
+            return redirect(reverse("add_item_confirm") + f"?codes={codes_param}")
     else:
         form = ItemForm()
 
-    context = {
-        "form": form,
-        "categories": Category.objects.all(),
-    }
+    context = {"form": form}
 
     return render(
         request,
         "inventory/add_item.html",
+        add_role_context(request, context),
+    )
+
+
+@user_passes_test(is_admin)
+@login_required
+def add_item_confirm(request):
+    raw = request.GET.get("codes", "")
+    codes = [c.strip() for c in raw.split(",") if c.strip()]
+
+    context = {"codes": codes}
+    return render(
+        request,
+        "inventory/add_item_confirm.html",
         add_role_context(request, context),
     )
 

@@ -20,13 +20,6 @@
 
                 <h5 class="mb-4">Add Item</h5>
 
-                <!-- Code preview -->
-                <div class="mb-4 pb-3 border-bottom text-center">
-                    <div class="text-muted small mb-1">Next inventory ID</div>
-                    <div id="code-preview" class="text-muted fst-italic">select a category</div>
-                </div>
-
-                <!-- Form -->
                 <form method="post">
                     {% csrf_token %}
 
@@ -45,8 +38,14 @@
                         {{ form.size }}
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100 mt-2">
-                        Save Item
+                    <div class="mb-4">
+                        <label for="id_quantity" class="form-label">Quantity</label>
+                        {{ form.quantity }}
+                        <div class="form-text">Number of identical items to add in one go.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        Save Item{{ form.quantity.value|default:1|add:0|pluralize }}
                     </button>
                 </form>
 
@@ -70,7 +69,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const categoryField = document.querySelector("select[name='category']");
     const sizeField = document.querySelector("select[name='size']");
-    const preview = document.getElementById("code-preview");
+    const quantityField = document.querySelector("input[name='quantity']");
+    const submitBtn = document.querySelector("button[type='submit']");
 
     if (!categoryField || !sizeField) return;
 
@@ -94,29 +94,17 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    function updateCodePreview(categoryId) {
-        fetch(`/inventory/get-next-code/?category_id=${categoryId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.code) {
-                    preview.textContent = data.code;
-                    preview.className = "fw-bold font-monospace fs-4";
-                }
-            });
-    }
-
     categoryField.addEventListener("change", function () {
-        const categoryId = categoryField.value;
-
-        if (!categoryId) {
-            preview.textContent = "select a category";
-            preview.className = "text-muted fst-italic";
-            return;
-        }
-
-        updateSizes(categoryId);
-        updateCodePreview(categoryId);
+        if (categoryField.value) updateSizes(categoryField.value);
     });
+
+    // Update button label when quantity changes
+    if (quantityField && submitBtn) {
+        quantityField.addEventListener("input", function () {
+            const n = parseInt(this.value) || 1;
+            submitBtn.textContent = n === 1 ? "Save Item" : `Save ${n} Items`;
+        });
+    }
 
 });
 </script>

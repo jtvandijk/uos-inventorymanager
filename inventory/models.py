@@ -42,6 +42,21 @@ class Category(models.Model):
     class Meta:
         verbose_name_plural = "Categories"
 
+    def clean(self):
+        if self.code:
+            conflict = Category.objects.filter(code__iexact=self.code)
+            if self.pk:
+                conflict = conflict.exclude(pk=self.pk)
+            if conflict.exists():
+                raise ValidationError({
+                    "code": f"Code '{self.code.upper()}' is already used by '{conflict.first().name}'."
+                })
+
+    def save(self, *args, **kwargs):
+        if self.code:
+            self.code = self.code.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 

@@ -7,6 +7,7 @@ from .views import (
     reserve_item,
     delete_item,
     add_item,
+    add_item_confirm,
     cancel_reservation,
     pack_item,
     collect_item,
@@ -23,6 +24,7 @@ urlpatterns = [
     # ---------------------------
     path("", inventory_view, name="inventory"),
     path("add/", add_item, name="add_item"),
+    path("add/confirm/", add_item_confirm, name="add_item_confirm"),
     path("delete/<int:item_id>/", delete_item, name="delete_item"),
     path("get-next-code/", get_next_code, name="get_next_code"),
 
