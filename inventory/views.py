@@ -256,13 +256,16 @@ def pack_item(request, item_id):
         status__in=["reserved", "packed"],
     ).first()
 
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
     if reservation:
         new_status = "packed" if reservation.status == "reserved" else "reserved"
         reservation.status = new_status
         reservation.save()
-        messages.success(request, f"Item marked as {'packed' if new_status == 'packed' else 'unpacked'}.")
+        if not is_ajax:
+            messages.success(request, f"Item marked as {'packed' if new_status == 'packed' else 'unpacked'}.")
 
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+    if is_ajax:
         return JsonResponse({"status": reservation.status if reservation else ""})
 
     return redirect(next_url)
