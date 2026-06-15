@@ -52,7 +52,7 @@ class ReservationForm(forms.ModelForm):
                     "type": "date",
                 }
             ),
-            "notes": forms.Textarea(attrs={"class": "form-control"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
     def __init__(self, *args, **kwargs):

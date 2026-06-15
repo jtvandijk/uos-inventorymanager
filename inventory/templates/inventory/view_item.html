@@ -110,9 +110,13 @@
 
                 <!-- Reservation Details -->
                 {% if reservation %}
-                <h5 class="text-center mt-4 mb-3">Reservation Details</h5>
+                <h2 class="text-center mt-4 mb-3">Reservation Details</h2>
 
                 <table class="table table-bordered">
+                    <colgroup>
+                        <col style="width: 40%">
+                        <col style="width: 60%">
+                    </colgroup>
                     <tr>
                         <th>Name</th>
                         <td>{{ reservation.person }}</td>
@@ -144,12 +148,12 @@
                     {% endif %}
 
                     {% if item.status == "reserved" %}
-                        <a href="{% url 'release_item' item.id %}?{{ next }}"
+                        <a href="{% url 'release_item' item.id %}?next={{ next }}"
                            class="btn btn-warning">
                             Release
                         </a>
 
-                        <a href="{% url 'mark_given' item.id %}?{{ next }}"
+                        <a href="{% url 'mark_given' item.id %}?next={{ next }}"
                            class="btn btn-dark">
                             Given
                         </a>
@@ -169,10 +173,9 @@
                 </div>
 
 
-                <!-- Back -->
+                <!-- Back — returns to wherever the user came from (volunteer or admin) -->
                 <div class="text-center mt-4">
-                    <a href="{% url 'inventory' %}?{{ request.GET.urlencode }}"
-                       class="btn btn-outline-secondary">
+                    <a href="{{ next }}" class="btn btn-outline-secondary">
                         Back
                     </a>
                 </div>

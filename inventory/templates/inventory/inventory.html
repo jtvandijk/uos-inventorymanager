@@ -27,7 +27,7 @@
     <div class="d-flex align-items-center justify-content-between mb-4">
 
         <div class="d-flex align-items-center gap-2">
-            <img src="{% static 'logo.jpeg' %}" alt="Logo" style="height: 40px;">
+            <img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px;">
             <h4 class="mb-0">UOS Inventory Manager</h4>
             <span class="badge bg-dark px-3 py-2 shadow-sm"
                 style="font-size: 0.9rem; border-radius: 8px; opacity: 0.85;">
@@ -88,12 +88,20 @@
         </div>
     </div>
 
-    <!-- Filters -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <!-- Filters + Search -->
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
 
-        <form method="get" class="d-flex gap-2 align-items-center">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-center flex-grow-1">
 
-            <select name="category" class="form-select">
+            <!-- Free-text search: searches item code, category name, or reservation person name -->
+            <input type="text"
+                   name="search"
+                   value="{{ request.GET.search|default:'' }}"
+                   class="form-control"
+                   placeholder="Search by code, category, or name…"
+                   style="max-width: 220px;">
+
+            <select name="category" class="form-select" style="max-width: 160px;">
                 <option value="">Category</option>
                 {% for c in categories %}
                 <option value="{{ c.id }}" {% if request.GET.category == c.id|stringformat:"s" %}selected{% endif %}>
@@ -102,14 +110,14 @@
                 {% endfor %}
             </select>
 
-            <select name="gender" class="form-select">
+            <select name="gender" class="form-select" style="max-width: 130px;">
                 <option value="">Gender</option>
                 <option value="male" {% if request.GET.gender == "male" %}selected{% endif %}>Male</option>
                 <option value="female" {% if request.GET.gender == "female" %}selected{% endif %}>Female</option>
                 <option value="unisex" {% if request.GET.gender == "unisex" %}selected{% endif %}>Unisex</option>
             </select>
 
-            <select name="status" class="form-select">
+            <select name="status" class="form-select" style="max-width: 140px;">
                 <option value="">Availability</option>
                 <option value="available" {% if request.GET.status == "available" %}selected{% endif %}>Available</option>
                 <option value="reserved" {% if request.GET.status == "reserved" %}selected{% endif %}>Reserved</option>
@@ -124,14 +132,15 @@
         </form>
 
         {% if is_admin %}
-        <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success">
+        <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success flex-shrink-0">
             + Add Item
         </a>
         {% endif %}
 
     </div>
 
-    <!-- Table -->
+    <!-- Table — scrolls horizontally on small screens -->
+    <div class="table-responsive">
     <table class="table table-bordered table-striped text-center align-middle">
 
     <thead class="table-light">
@@ -185,6 +194,9 @@
             </a>
         </th>
 
+        <!-- Reserved For — person name on reservations -->
+        <th class="text-center">Reserved For</th>
+
         <th class="text-center">Details</th>
 
     </tr>
@@ -226,6 +238,16 @@
             </td>
 
             <td>
+                {% for res in item.reservation_set.all %}
+                    {% if res.status == "reserved" %}
+                        {{ res.person }}
+                    {% endif %}
+                {% empty %}
+                    <span class="text-muted">-</span>
+                {% endfor %}
+            </td>
+
+            <td>
                 <a href="{% url 'view_item' item.id %}?next=/inventory/&{{ request.GET.urlencode }}"
                    class="btn btn-primary btn-sm">
                     View
@@ -237,6 +259,7 @@
         </tbody>
 
     </table>
+    </div><!-- /.table-responsive -->
 
     <!-- Pagination -->
     <div class="d-flex justify-content-between align-items-center mt-3">

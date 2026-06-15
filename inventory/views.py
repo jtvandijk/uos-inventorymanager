@@ -75,7 +75,7 @@ def inventory_view(request):
     if not is_admin(request.user):
         return redirect("volunteer")
 
-    items = Item.objects.select_related("category")
+    items = Item.objects.select_related("category").prefetch_related("reservation_set")
 
     category = request.GET.get("category")
     gender = request.GET.get("gender")
@@ -95,7 +95,12 @@ def inventory_view(request):
         items = items.exclude(status="given")
 
     if search:
-        items = items.filter(code__icontains=search)
+        # Search by item code, category name, or the name on a reservation
+        items = items.filter(
+            Q(code__icontains=search) |
+            Q(category__name__icontains=search) |
+            Q(reservation__person__icontains=search)
+        ).distinct()
 
     allowed_sorts = [
         "code", "-code",
@@ -291,13 +296,18 @@ def volunteer_view(request):
     status_filter = request.GET.get("status", "available")
     search = request.GET.get("search", "")
 
-    items = Item.objects.filter(status=status_filter)
+    items = Item.objects.filter(
+        status=status_filter
+    ).select_related("category").prefetch_related("reservation_set")
 
     if search:
+        # Allow volunteers to find items by category, ID, or the name on a reservation
+        # (e.g. a client says "I reserved a sweater" — search their name directly)
         items = items.filter(
             Q(category__name__icontains=search) |
-            Q(code__icontains=search)
-        )
+            Q(code__icontains=search) |
+            Q(reservation__person__icontains=search)
+        ).distinct()
 
     paginator = Paginator(items.order_by("code"), 5)
     page_obj = paginator.get_page(request.GET.get("page"))

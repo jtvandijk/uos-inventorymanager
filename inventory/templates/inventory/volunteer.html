@@ -25,7 +25,7 @@
         <div class="text-center mb-3">
 
             <div class="d-flex align-items-center justify-content-center gap-2 mb-1">
-                <img src="{% static 'logo.jpeg' %}" alt="Logo" style="height: 40px;">
+                <img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px;">
                 <h4 class="mb-0">UOS Inventory Manager</h4>
                 <span class="badge bg-dark px-3 py-2 shadow-sm"
                       style="font-size: 0.9rem; border-radius: 8px; opacity: 0.85;">
@@ -67,32 +67,42 @@
         <h5 class="mb-2">My Reservations</h5>
 
         {% for r in my_reservations %}
-        <div class="card p-2 mb-2 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center">
+        <div class="card p-3 mb-2 shadow-sm">
+            <div class="d-flex justify-content-between align-items-start gap-2">
 
-                <div>
-                    <strong>{{ r.item.category.name }}</strong><br>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">{{ r.item.category.name }}</div>
 
-                    <span class="text-muted small">
+                    {% if r.item.gender != "unisex" %}
+                    <span class="badge bg-secondary mb-1">{{ r.item.get_gender_display }}</span>
+                    {% endif %}
+
+                    <div class="text-muted small">
                         <span class="fw-semibold">ID:</span> {{ r.item.code }}
-                    </span>
+                    </div>
 
                     {% if r.item.size and r.item.size != "N/A" %}
-                    <br>
-                    <span class="text-muted small">
+                    <div class="text-muted small">
                         <span class="fw-semibold">Size:</span> {{ r.item.get_size_label }}
-                    </span>
+                    </div>
                     {% endif %}
+
+                    <!-- Reservation summary -->
+                    <div class="mt-1 pt-1 border-top text-muted small">
+                        <span class="fw-semibold">For:</span> {{ r.person }}<br>
+                        <span class="fw-semibold">Collection:</span> {{ r.reserved_for_date|date:"d M Y" }}
+                    </div>
                 </div>
 
-                <a href="{% url 'view_item' r.item.id %}?next=/inventory/volunteer/" class="btn btn-primary px-3 py-2">
+                <a href="{% url 'view_item' r.item.id %}?next=/inventory/volunteer/"
+                   class="btn btn-primary px-3 py-2 flex-shrink-0">
                     View
                 </a>
 
             </div>
         </div>
         {% empty %}
-        <p class="text-muted">No reservations yet</p>
+        <p class="text-muted">No active reservations</p>
         {% endfor %}
 
 
@@ -125,7 +135,7 @@
                        id="searchInput"
                        value="{{ search|default:'' }}"
                        class="form-control"
-                       placeholder="Search items"
+                       placeholder="Search by item, size, or name…"
                        autocomplete="off">
             </div>
         </form>
