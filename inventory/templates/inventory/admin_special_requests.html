@@ -129,7 +129,7 @@
                 <div class="d-flex flex-column gap-1 align-items-center">
                     {% now "Y-m-d" as today_date %}
                     {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
-                    <button class="btn btn-sm btn-success" disabled>
+                    <button class="btn btn-sm btn-success" disabled style="opacity:1;">
                         <i class="bi bi-check-circle-fill me-1"></i>Confirmed
                     </button>
                     {% else %}
@@ -173,10 +173,14 @@
                 <a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}">Previous</a>
             </li>
             {% endif %}
-            {% for num in page_obj.paginator.page_range %}
+            {% for num in elided_range %}
+            {% if num == "…" %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% else %}
             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
                 <a class="page-link" href="?page={{ num }}&status={{ status_filter }}">{{ num }}</a>
             </li>
+            {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
             <li class="page-item">

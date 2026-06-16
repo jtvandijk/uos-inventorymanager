@@ -152,9 +152,11 @@ def inventory_view(request):
 
     paginator = Paginator(items, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
+    elided_range = list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
 
     context = {
         "page_obj": page_obj,
+        "elided_range": elided_range,
         "sort": sort,
     }
 
@@ -511,8 +513,9 @@ def missed_collections_view(request):
 
     paginator = Paginator(missed_qs, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
+    elided_range = list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
 
-    context = {"page_obj": page_obj}
+    context = {"page_obj": page_obj, "elided_range": elided_range}
     return render(request, "inventory/missed_collections.html", add_role_context(request, context))
 
 
@@ -594,17 +597,26 @@ def volunteer_view(request):
         request.GET.get("res_page")
     )
 
-    active_special_requests = SpecialRequest.objects.filter(
+    sr_qs = SpecialRequest.objects.filter(
         status="active",
     ).select_related("category", "route", "requested_by").order_by("requested_at")
+    sr_paginator = Paginator(sr_qs, 5)
+    sr_page_obj = sr_paginator.get_page(request.GET.get("sr_page"))
+    sr_elided_range = list(sr_paginator.get_elided_page_range(sr_page_obj.number, on_each_side=2, on_ends=1))
+
+    res_elided_range = list(
+        Paginator(my_res.order_by("-id"), 5).get_elided_page_range(res_page_obj.number, on_each_side=2, on_ends=1)
+    )
 
     context = {
         "page_obj": page_obj,
         "my_reservations": res_page_obj,
         "res_page_obj": res_page_obj,
+        "res_elided_range": res_elided_range,
         "search": search,
         "status_filter": status_filter,
-        "active_special_requests": active_special_requests,
+        "sr_page_obj": sr_page_obj,
+        "sr_elided_range": sr_elided_range,
     }
 
     return render(
@@ -652,8 +664,9 @@ def admin_special_requests_view(request):
 
     paginator = Paginator(qs, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
+    elided_range = list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
 
-    context = {"page_obj": page_obj, "status_filter": status_filter}
+    context = {"page_obj": page_obj, "elided_range": elided_range, "status_filter": status_filter}
     return render(request, "inventory/admin_special_requests.html", add_role_context(request, context))
 
 
