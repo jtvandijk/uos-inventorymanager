@@ -60,9 +60,11 @@ for _ in range(50):
     size_pool = size_map.get(cat.size_type, [""])
     size = random.choice(size_pool) if size_pool != [""] else ""
 
+    gender = "unisex" if cat.size_type == "none" else random.choice(genders)
+
     item = Item(
         category=cat,
-        gender=random.choice(genders),
+        gender=gender,
         size=size,
         created_by=user,
         updated_at=timezone.now(),
