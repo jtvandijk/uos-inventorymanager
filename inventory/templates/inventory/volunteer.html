@@ -119,23 +119,28 @@
 
             <button id="btnAvailable"
                 class="btn {% if status_filter != 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                onclick="changeStatus('available')">
+                onclick="showTab('items'); changeStatus('available')">
                 Available
             </button>
 
             <button id="btnReserved"
                 class="btn {% if status_filter == 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                onclick="changeStatus('reserved')">
+                onclick="showTab('items'); changeStatus('reserved')">
                 Reserved
+            </button>
+
+            <button id="btnSpecial"
+                class="btn btn-outline-warning"
+                onclick="showTab('special')">
+                <i class="bi bi-star me-1"></i>Requests
             </button>
 
         </div>
 
-        <!-- Search -->
-        <form class="mb-3" onsubmit="return false;">
+        <!-- Search (hidden when Special tab active) -->
+        <form class="mb-3" id="searchForm" onsubmit="return false;">
             <div class="input-group">
                 <span class="input-group-text">🔍</span>
-
                 <input type="text"
                        id="searchInput"
                        value="{{ search|default:'' }}"
@@ -150,15 +155,131 @@
             {% include "inventory/_item_list.html" %}
         </div>
 
+        <!-- Special Requests List (hidden by default) -->
+        <div id="specialList" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small">Active special requests — press <strong>Still Active</strong> to confirm the person still needs the item and reset the 4-week clock.</span>
+            </div>
+            <a href="{% url 'create_special_request' %}?next=/inventory/volunteer/"
+               class="btn btn-warning btn-sm mb-3 w-100">
+                <i class="bi bi-plus-lg me-1"></i>New Special Request
+            </a>
+            {% for sr in active_special_requests %}
+            <div class="card p-3 mb-2 shadow-sm">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">{{ sr.person }}</div>
+                        <span class="badge bg-warning text-dark mb-1">{{ sr.category.name }}</span>
+                        {% if sr.route %}
+                        <span class="badge ms-1 mb-1"
+                              style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
+                            {{ sr.route.name }}
+                        </span>
+                        {% endif %}
+                        <div class="text-muted small mt-1">
+                            Requested: {{ sr.requested_at|date:"d M Y" }}
+                            &nbsp;·&nbsp;
+                            Last confirmed: {{ sr.last_confirmed_at|date:"d M Y" }}
+                        </div>
+                        {% if sr.notes %}
+                        <div class="text-muted small fst-italic mt-1">{{ sr.notes }}</div>
+                        {% endif %}
+                    </div>
+                    {% now "Y-m-d" as today_date %}
+                    {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
+                    <button class="btn btn-sm btn-success flex-shrink-0" disabled>
+                        <i class="bi bi-check-circle-fill"></i><br>
+                        <small>Confirmed</small>
+                    </button>
+                    {% else %}
+                    <form method="post" action="{% url 'confirm_special_request' sr.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
+                        <button class="btn btn-sm btn-outline-success flex-shrink-0" title="Still waiting — reset 4-week clock">
+                            <i class="bi bi-check-circle"></i><br>
+                            <small>Still Active</small>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% if sr.requested_by == request.user %}
+                <div class="mt-2 pt-2 border-top">
+                    <button class="btn btn-sm btn-outline-danger w-100"
+                            data-bs-toggle="modal"
+                            data-bs-target="#cancelModal{{ sr.id }}">
+                        Cancel this request
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p class="text-muted text-center py-3">No active special requests.</p>
+            {% endfor %}
+        </div>
+
     </div>
 </div>
 
 <!-- JS -->
+{% for sr in active_special_requests %}
+{% if sr.requested_by == request.user %}
+<div class="modal fade" id="cancelModal{{ sr.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Special Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Cancel the request for <strong>{{ sr.person }}</strong> ({{ sr.category.name }})?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep it</button>
+                <form method="post" action="{% url 'cancel_special_request' sr.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
+                    <button type="submit" class="btn btn-danger">Yes, cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
 <script>
 const input = document.getElementById("searchInput");
 let timeout = null;
+let activeTab = "items";
+
+function showTab(tab) {
+    activeTab = tab;
+    const itemList = document.getElementById("itemList");
+    const specialList = document.getElementById("specialList");
+    const searchForm = document.getElementById("searchForm");
+    const btnSpecial = document.getElementById("btnSpecial");
+    const btnAvailable = document.getElementById("btnAvailable");
+    const btnReserved = document.getElementById("btnReserved");
+
+    if (tab === "special") {
+        itemList.style.display = "none";
+        specialList.style.display = "block";
+        searchForm.style.display = "none";
+        btnSpecial.classList.replace("btn-outline-warning", "btn-warning");
+        btnAvailable.classList.remove("btn-primary");
+        btnAvailable.classList.add("btn-outline-primary");
+        btnReserved.classList.remove("btn-primary");
+        btnReserved.classList.add("btn-outline-primary");
+    } else {
+        itemList.style.display = "block";
+        specialList.style.display = "none";
+        searchForm.style.display = "block";
+        btnSpecial.classList.replace("btn-warning", "btn-outline-warning");
+    }
+}
 
 // Enable dismiss button
 function initAlerts() {
@@ -236,7 +357,12 @@ function updateToggleButtons(status) {
 
 // Initialise everything
 document.addEventListener("DOMContentLoaded", function() {
-    updateToggleButtons("{{ status_filter }}");
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "special") {
+        showTab("special");
+    } else {
+        updateToggleButtons("{{ status_filter }}");
+    }
     initAlerts();
     autoDismissAlerts();
 });

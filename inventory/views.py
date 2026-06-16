@@ -7,8 +7,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.contrib import messages
 
-from .models import Category, SizeOption, Item, Reservation, Route
-from .forms import ItemForm, ItemEditForm, ReservationForm
+from .models import Category, SizeOption, Item, Reservation, Route, SpecialRequest
+from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm
 
 import re
 
@@ -24,6 +24,43 @@ def is_admin(user):
 def add_role_context(request, context):
     context["is_admin"] = is_admin(request.user)
     return context
+
+
+# ---------------------------
+# Special Request Helpers
+# ---------------------------
+
+def _next_walk_day(weekday):
+    from datetime import date, timedelta
+    today = date.today()
+    days = (weekday - today.weekday()) % 7 or 7
+    return today + timedelta(days=days)
+
+
+def _try_auto_assign_special(item, by_user=None):
+    if not item.category.is_special:
+        return None
+    req = SpecialRequest.objects.filter(
+        category=item.category,
+        status="active",
+    ).order_by("requested_at").first()
+    if not req:
+        return None
+    res = Reservation(
+        item=item,
+        person=req.person,
+        route=req.route,
+        reserved_for_date=_next_walk_day(req.requested_at.weekday()),
+        notes=f"Special request auto-assigned (originally requested {req.requested_at.date()}).",
+        reserved_by=by_user or req.requested_by,
+    )
+    res.save()
+    SpecialRequest.objects.filter(pk=req.pk).update(
+        status="fulfilled",
+        fulfilled_at=timezone.now(),
+        fulfilled_by_item=item,
+    )
+    return req
 
 
 # ---------------------------
@@ -83,6 +120,8 @@ def inventory_view(request):
 
     if status == "pending":
         items = items.filter(status__in=["reserved", "packed"])
+    elif status == "special":
+        items = items.filter(category__is_special=True).exclude(status="given")
     elif status:
         items = items.filter(status=status)
     else:
@@ -288,7 +327,12 @@ def collect_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
     if item.status in ("reserved", "packed"):
-        Reservation.objects.filter(item=item).delete()
+        # Use QuerySet.update() to bypass Reservation.delete() cascade (would set item→available)
+        # Keeping the reservation preserves person's name for the Collected view
+        Reservation.objects.filter(
+            item=item,
+            status__in=["reserved", "packed"],
+        ).update(status="given")
 
         item.status = "given"
         item.given_by = request.user
@@ -315,20 +359,32 @@ def add_item(request):
         if form.is_valid():
             quantity = form.cleaned_data["quantity"]
             category = form.cleaned_data["category"]
-            gender = form.cleaned_data["gender"]
-            size = form.cleaned_data.get("size", "")
+            gender = "unisex" if category.is_special else form.cleaned_data["gender"]
+            size = "" if category.is_special else form.cleaned_data.get("size", "")
+            device_code = form.cleaned_data.get("device_code", "")
+            sim_number = form.cleaned_data.get("sim_number", "")
 
             created_codes = []
+            assigned_to = []
             for _ in range(quantity):
                 item = Item(
                     category=category,
                     gender=gender,
                     size=size,
+                    device_code=device_code,
+                    sim_number=sim_number,
                     created_by=request.user,
                     updated_at=timezone.now(),
                 )
                 item.save()
                 created_codes.append(item.code)
+                req = _try_auto_assign_special(item, by_user=request.user)
+                if req:
+                    assigned_to.append((item.code, req.person))
+
+            if assigned_to:
+                names = ", ".join(f"{code} → {person}" for code, person in assigned_to)
+                messages.success(request, f"Auto-assigned from special request queue: {names}")
 
             from django.urls import reverse
             codes_param = ",".join(created_codes)
@@ -336,7 +392,12 @@ def add_item(request):
     else:
         form = ItemForm()
 
-    context = {"form": form}
+    import json
+    categories_data = {
+        str(cat.id): {"is_special": cat.is_special, "extra_field": cat.extra_field}
+        for cat in Category.objects.all()
+    }
+    context = {"form": form, "categories_data_json": json.dumps(categories_data)}
 
     return render(
         request,
@@ -533,12 +594,17 @@ def volunteer_view(request):
         request.GET.get("res_page")
     )
 
+    active_special_requests = SpecialRequest.objects.filter(
+        status="active",
+    ).select_related("category", "route", "requested_by").order_by("requested_at")
+
     context = {
         "page_obj": page_obj,
         "my_reservations": res_page_obj,
         "res_page_obj": res_page_obj,
         "search": search,
         "status_filter": status_filter,
+        "active_special_requests": active_special_requests,
     }
 
     return render(
@@ -546,6 +612,72 @@ def volunteer_view(request):
         "inventory/volunteer.html",
         add_role_context(request, context),
     )
+
+
+# ---------------------------
+# Special Requests
+# ---------------------------
+
+@login_required
+def create_special_request(request):
+    next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/volunteer/"
+
+    if request.method == "POST":
+        form = SpecialRequestForm(request.POST)
+        if form.is_valid():
+            sr = form.save(commit=False)
+            sr.requested_by = request.user
+            sr.save()
+            messages.success(request, f"Special request for {sr.person} ({sr.category.name}) added to the queue.")
+            return redirect(next_url)
+    else:
+        form = SpecialRequestForm()
+
+    context = {"form": form, "next": next_url}
+    return render(request, "inventory/special_request.html", add_role_context(request, context))
+
+
+@login_required
+def admin_special_requests_view(request):
+    if not is_admin(request.user):
+        return redirect("volunteer")
+
+    status_filter = request.GET.get("status", "")
+    qs = SpecialRequest.objects.select_related(
+        "category", "route", "requested_by", "fulfilled_by_item"
+    )
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    qs = qs.order_by("-requested_at")
+
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    context = {"page_obj": page_obj, "status_filter": status_filter}
+    return render(request, "inventory/admin_special_requests.html", add_role_context(request, context))
+
+
+@login_required
+def confirm_special_request(request, sr_id):
+    sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
+    next_url = request.POST.get("next") or request.GET.get("next") or "/inventory/volunteer/"
+    SpecialRequest.objects.filter(pk=sr.pk).update(last_confirmed_at=timezone.now())
+    messages.success(request, f"Confirmed {sr.person}'s request is still active. 4-week clock reset.")
+    return redirect(next_url)
+
+
+@login_required
+def cancel_special_request(request, sr_id):
+    sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
+    next_url = request.POST.get("next") or request.GET.get("next") or "/inventory/volunteer/"
+    if sr.requested_by != request.user and not is_admin(request.user):
+        return redirect(next_url)
+    SpecialRequest.objects.filter(pk=sr.pk).update(
+        status="lapsed",
+        lapsed_at=timezone.now(),
+    )
+    messages.success(request, f"Special request for {sr.person} ({sr.category.name}) cancelled.")
+    return redirect(next_url)
 
 
 # ---------------------------

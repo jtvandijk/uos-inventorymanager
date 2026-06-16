@@ -35,9 +35,17 @@ class Category(models.Model):
         ("none", "No Size"),
     ]
 
+    EXTRA_FIELDS = [
+        ("none", "None"),
+        ("device_code", "Device Code"),
+        ("sim_number", "SIM Number"),
+    ]
+
     name = models.CharField(max_length=100, unique=True)
     size_type = models.CharField(max_length=20, choices=SIZE_TYPES)
     code = models.CharField(max_length=3, blank=True)
+    is_special = models.BooleanField(default=False)
+    extra_field = models.CharField(max_length=20, choices=EXTRA_FIELDS, default="none")
 
     class Meta:
         verbose_name_plural = "Categories"
@@ -117,6 +125,9 @@ class Item(models.Model):
     updated_at = models.DateTimeField(null=True, blank=True)
     given_at = models.DateTimeField(null=True, blank=True)
 
+    device_code = models.CharField(max_length=100, blank=True, default="")
+    sim_number = models.CharField(max_length=30, blank=True, default="")
+
     def get_size_label(self):
         if not self.size:
             return None
@@ -151,6 +162,12 @@ class Item(models.Model):
             raise ValidationError({
                 "size": f"Invalid size '{self.size}' for category '{self.category.name}'"
             })
+
+        if self.category.extra_field == "device_code" and not self.device_code:
+            raise ValidationError({"device_code": "Device code is required for this category."})
+
+        if self.category.extra_field == "sim_number" and not self.sim_number:
+            raise ValidationError({"sim_number": "SIM number is required for this category."})
 
     def generate_code(self):
         prefix = "UOS"
@@ -270,6 +287,64 @@ class Reservation(models.Model):
         self.item.save()
 
         super().delete(*args, **kwargs)
+
+
+# ---------------------------
+# Size Options
+# ---------------------------
+
+# ---------------------------
+# Special Request
+# ---------------------------
+
+class SpecialRequest(models.Model):
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("fulfilled", "Fulfilled"),
+        ("lapsed", "Lapsed"),
+    ]
+
+    person = models.CharField(max_length=100)
+    route = models.ForeignKey(
+        "Route",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="special_requests",
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        limit_choices_to={"is_special": True},
+    )
+    notes = models.TextField(blank=True, default="")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+
+    requested_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="special_requests_filed",
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    last_confirmed_at = models.DateTimeField(auto_now_add=True)
+
+    fulfilled_by_item = models.ForeignKey(
+        Item,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="fulfilled_special_request",
+    )
+    fulfilled_at = models.DateTimeField(null=True, blank=True)
+    lapsed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["requested_at"]
+
+    def __str__(self):
+        return f"{self.person} → {self.category.name} ({self.status})"
 
 
 # ---------------------------

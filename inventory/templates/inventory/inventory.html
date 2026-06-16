@@ -59,7 +59,9 @@
         {% if is_admin %}
         <div class="d-flex gap-2">
             <a href="{% url 'missed_collections' %}" class="btn btn-outline-dark btn-sm">Missed Collections</a>
+            <a href="{% url 'admin_special_requests' %}" class="btn btn-outline-dark btn-sm">Special Requests</a>
             <a href="{% url 'run_sheet' %}" class="btn btn-outline-dark btn-sm">Run Sheet</a>
+            <a href="{% url 'create_special_request' %}?next={{ request.get_full_path }}" class="btn btn-warning btn-sm">+ Special Request</a>
             <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success btn-sm">+ Add Item</a>
         </div>
         {% endif %}
@@ -124,7 +126,7 @@
         </th>
 
         <th class="text-center">Reserved For</th>
-        <th class="text-center">Route</th>
+        <th class="text-center">Info</th>
         <th class="text-center">Details</th>
 
     </tr>
@@ -166,14 +168,17 @@
                        title="Date was automatically pushed by 7 days after a missed collection"></i>
                     {% endif %}
                 {% endif %}
-            {% empty %}
-                -
             {% endfor %}
+            {% if item.status == "available" %}
+                <span class="text-muted">-</span>
+            {% elif item.status == "given" and item.given_at %}
+                {{ item.given_at|date:"d M Y" }}
+            {% endif %}
         </td>
 
         <td>
             {% for res in item.reservation_set.all %}
-                {% if res.status == "reserved" or res.status == "packed" %}
+                {% if res.status == "reserved" or res.status == "packed" or res.status == "given" %}
                     {{ res.person }}
                 {% endif %}
             {% empty %}
@@ -182,6 +187,9 @@
         </td>
 
         <td>
+            {% if item.category.is_special %}
+                <span class="badge bg-warning text-dark">Special</span>
+            {% endif %}
             {% for res in item.reservation_set.all %}
                 {% if res.status == "reserved" or res.status == "packed" %}
                     {% if res.route %}
@@ -189,12 +197,10 @@
                               style="background-color: {{ res.route.color }}; color: {{ res.route.text_color }};">
                             {{ res.route.name }}
                         </span>
-                    {% else %}
-                        <span class="text-muted">-</span>
                     {% endif %}
                 {% endif %}
             {% empty %}
-                <span class="text-muted">-</span>
+                {% if not item.category.is_special %}<span class="text-muted">-</span>{% endif %}
             {% endfor %}
         </td>
 
@@ -252,6 +258,7 @@
         <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
         <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
         <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'given' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" data-status="given">Collected</button>
+        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'special' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="special">Special</button>
     </div>
 
 </div>

@@ -45,6 +45,23 @@ for name, code, size_type in [
     status = "created" if created else "already exists"
     print(f"  {name} ({code}) — {status}")
 
+print("Setting up special request categories...")
+
+for name, code, extra_field in [
+    ("Tent",         "TE", "none"),
+    ("Mobile Phone", "PH", "device_code"),
+    ("SIM Card",     "SI", "sim_number"),
+]:
+    cat, created = Category.objects.get_or_create(
+        name=name,
+        defaults={"code": code, "size_type": "none", "is_special": True, "extra_field": extra_field},
+    )
+    if not created:
+        # Ensure existing categories have is_special set correctly
+        Category.objects.filter(pk=cat.pk).update(is_special=True, extra_field=extra_field)
+    status = "created" if created else "updated"
+    print(f"  {name} ({code}) — {status}")
+
 print("Setting up routes...")
 
 for name, color, text_color in [

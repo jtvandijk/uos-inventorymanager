@@ -11,10 +11,12 @@ Built and maintained by a solo volunteer.
 - **Workflow** — items move through Available → Reserved → Packed → Collected
 - **Reservation lapse** — automated daily job extends uncollected reservations by 7 days on the first miss; releases back to stock on the second miss and logs to Missed Collections
 - **Re-assign** — if a reserved item is given to someone else in the field, volunteers can re-assign the reservation to another matching item in stock (or log it as missed if none available)
+- **Special requests** — queue-based system for items not normally in stock (tent, mobile phone, SIM card). Items auto-assign to the first person in queue (FIFO) when added to inventory; volunteers confirm requests are still active (button turns green when confirmed today); lapses after 4 weeks without confirmation
 - **Run sheet** — per-date, per-route picking list with AJAX pack toggling and print support
 - **Missed Collections** — admin log of reservations that lapsed or could not be re-assigned, for tracking patterns over time
-- **Two roles** — Admin (full access) and Volunteer (reserve, cancel/edit own reservations, mark collected, re-assign)
-- **Search & filter** — search by item code, category, or person; filter by status (including combined Pending = reserved + packed); sortable columns; paginated
+- **Two roles** — Admin (full access) and Volunteer (reserve, cancel/edit own reservations, mark collected, re-assign, file special requests)
+- **Search & filter** — search by item code, category, or person; filter by status (including combined Pending = reserved + packed, Special = special-category items); sortable columns; paginated
+- **Resource hub** — public `/resources/` page with volunteer guidelines, policies, and reference information (no login required)
 
 ## Tech stack
 
@@ -46,7 +48,7 @@ Two seed scripts are provided to bootstrap categories, sizes, routes, and test d
 python manage.py shell < seed_categories.py
 ```
 
-Creates 16 clothing categories with 2-character codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and the 7 outreach routes with their colours.
+Creates 16 clothing categories and 3 special-request categories (Tent, Mobile Phone, SIM Card) with 2-character codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and the 7 outreach routes with their colours.
 
 **Step 2 — test data** (wipes items and reservations, keeps everything else):
 
@@ -70,15 +72,27 @@ Run manually to test:
 python manage.py process_lapses
 ```
 
+## Special request lapse (automated)
+
+Special requests that are not confirmed within 4 weeks are automatically lapsed, and any available special-category items are auto-assigned to the next person in queue. This is handled by a second daily management command:
+
+```bash
+python manage.py process_special_lapses
+```
+
+**Two-pass logic:**
+- **Pass 1** — lapses any active special request where `last_confirmed_at` is older than 28 days
+- **Pass 2** — for each available special-category item, finds the oldest active request for that category and creates a reservation (collection date = next occurrence of the same weekday the request was originally filed)
+
 ### Cron setup (production server)
 
-Add to crontab with `crontab -e`:
+Add both commands to crontab with `crontab -e`. Run `process_special_lapses` immediately after `process_lapses` so released items are re-queued in the same daily job:
 
 ```
-0 7 * * * /path/to/venv/bin/python /path/to/manage.py process_lapses >> /path/to/logs/lapses.log 2>&1
+0 7 * * * /path/to/venv/bin/python /path/to/manage.py process_lapses >> /path/to/logs/lapses.log 2>&1 && /path/to/venv/bin/python /path/to/manage.py process_special_lapses >> /path/to/logs/lapses.log 2>&1
 ```
 
-Adjust paths to match your server. The command is idempotent — safe to run multiple times on the same day.
+Adjust paths to match your server. Both commands are idempotent — safe to run multiple times on the same day.
 
 ## Production
 
@@ -107,5 +121,7 @@ Nginx proxies to Gunicorn with `X-Forwarded-Proto` headers for HTTPS.
 | Re-assign reservation | ✓ | ✓ |
 | Mark as packed / unpacked | | ✓ |
 | Mark as collected | ✓ | ✓ |
+| File / confirm / cancel special requests | ✓ | ✓ |
 | Run sheet | | ✓ |
 | Missed Collections log | | ✓ |
+| Special Requests admin log | | ✓ |

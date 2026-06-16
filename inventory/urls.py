@@ -19,6 +19,10 @@ from .views import (
     volunteer_view,
     run_sheet_view,
     missed_collections_view,
+    create_special_request,
+    admin_special_requests_view,
+    confirm_special_request,
+    cancel_special_request,
 )
 
 
@@ -54,6 +58,14 @@ urlpatterns = [
     # Volunteer Interface
     # ---------------------------
     path("volunteer/", volunteer_view, name="volunteer"),
+
+    # ---------------------------
+    # Special Requests
+    # ---------------------------
+    path("special-request/new/", create_special_request, name="create_special_request"),
+    path("special-requests/", admin_special_requests_view, name="admin_special_requests"),
+    path("special-request/<int:sr_id>/confirm/", confirm_special_request, name="confirm_special_request"),
+    path("special-request/<int:sr_id>/cancel/", cancel_special_request, name="cancel_special_request"),
 
     # ---------------------------
     # Run Sheet

@@ -3,7 +3,7 @@ from datetime import date
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 
-from .models import Item, Reservation, Route
+from .models import Category, Item, Reservation, Route, SpecialRequest
 
 
 # ---------------------------
@@ -31,6 +31,16 @@ class ItemForm(forms.ModelForm):
         widget=forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 100}),
     )
 
+    device_code = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. Samsung Galaxy A15 / IMEI 123456789"}),
+    )
+
+    sim_number = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. 07700 900123"}),
+    )
+
     class Meta:
         model = Item
         fields = ["category", "gender", "size"]
@@ -40,6 +50,16 @@ class ItemForm(forms.ModelForm):
             "gender": forms.Select(attrs={"class": "form-select"}),
             "size": forms.Select(attrs={"class": "form-select"}),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        category = cleaned.get("category")
+        if category:
+            if category.extra_field == "device_code" and not cleaned.get("device_code"):
+                self.add_error("device_code", "Device code is required for this category.")
+            if category.extra_field == "sim_number" and not cleaned.get("sim_number"):
+                self.add_error("sim_number", "SIM number is required for this category.")
+        return cleaned
 
 
 # ---------------------------
@@ -88,3 +108,29 @@ class ReservationForm(forms.ModelForm):
         self.fields["route"].queryset = Route.objects.all()
         self.fields["route"].empty_label = "— Select a route —"
         self.fields["route"].required = True
+
+
+# ---------------------------
+# Special Request Form
+# ---------------------------
+
+class SpecialRequestForm(forms.ModelForm):
+    class Meta:
+        model = SpecialRequest
+        fields = ["person", "category", "route", "notes"]
+
+        widgets = {
+            "person": forms.TextInput(attrs={"class": "form-control"}),
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "route": forms.Select(attrs={"class": "form-select"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(is_special=True)
+        self.fields["category"].empty_label = "— Select a category —"
+        self.fields["route"].queryset = Route.objects.all()
+        self.fields["route"].empty_label = "— Select a route —"
+        self.fields["route"].required = True
+        self.fields["notes"].required = False

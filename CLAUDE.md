@@ -15,13 +15,14 @@ Built and maintained by a solo volunteer. Keep solutions simple — no over-engi
 ## Django apps
 - `inventory` — the only app; all models, views, forms, templates live here
 - `stockmanager` — project settings/urls only
+- `resources` — standalone public volunteer resource hub (`/resources/`); no models, single view + hardcoded template. No login required.
 
 ## Roles & permissions
 - Two roles: **Admin** (Django group named exactly `"Admin"`) and **Volunteer** (any authenticated non-admin user)
 - Permission check: `is_admin(user)` in `views.py` — checks `user.groups.filter(name="Admin")`
 - Always pass `is_admin` to templates via `add_role_context(request, context)`
-- Volunteers: reserve items, cancel/edit their own reservations, mark items collected, re-assign
-- Admins: everything, including pack/unpack, add/edit/delete items, run sheet, missed collections
+- Volunteers: reserve items, cancel/edit their own reservations, mark items collected, re-assign, file/confirm/cancel special requests
+- Admins: everything, including pack/unpack, add/edit/delete items, run sheet, missed collections, special requests admin log
 
 ## Item workflow
 `available` → `reserved` → `packed` → `given` (displayed as "Collected")
@@ -80,6 +81,9 @@ Pass 2 — first miss (extend by 7 days):
 **Why `QuerySet.delete()` not `model.delete()` in re-assign:**
 `Reservation.model.delete()` sets `item.status = "available"` via signal/override. When re-assigning to a found replacement, we want `item.status = "given"`, so use `Reservation.objects.filter(pk=...).delete()` to bypass the cascade.
 
+**Why `collect_item` uses `QuerySet.update(status="given")` not `.delete()`:**
+Keeping the reservation with `status="given"` preserves the person's name for the inventory Collected view. The "Reserved For" column in `inventory.html` checks `status in ["reserved","packed","given"]`. Using `QuerySet.update()` bypasses `Reservation.delete()` (which would reset item→available); item status is then set manually to "given".
+
 **Reservation model fields added for lapse:**
 ```python
 auto_extended = models.BooleanField(default=False)
@@ -116,13 +120,62 @@ Stores reservations with `status="missed"`. Two reasons:
 
 Missed reservations stay linked to their original item in the DB. New reservations can be created for the same item without conflict — `Reservation.clean()` only checks `status="reserved"`.
 
+## Special request system
+
+Handles items not normally in stock (Tent, Mobile Phone, SIM Card). Categories are flagged with `Category.is_special=True`.
+
+**`SpecialRequest` model fields:**
+```python
+person = CharField(max_length=100)
+route = ForeignKey(Route, null=True)
+category = ForeignKey(Category, limit_choices_to={"is_special": True})
+notes = TextField(blank=True)
+status = CharField(choices=[("active","Active"),("fulfilled","Fulfilled"),("lapsed","Lapsed")])
+requested_by = ForeignKey(User, null=True)
+requested_at = DateTimeField(auto_now_add=True)
+last_confirmed_at = DateTimeField(auto_now_add=True)  # reset by "Still Active"
+fulfilled_by_item = ForeignKey(Item, null=True, blank=True)
+fulfilled_at = DateTimeField(null=True, blank=True)
+lapsed_at = DateTimeField(null=True, blank=True)
+```
+
+**Category extra fields:**
+- `Category.extra_field` choices: `none` / `device_code` / `phone_number`
+- Mobile Phone → `device_code` field on Item; SIM Card → `sim_number` field on Item
+- add_item.html hides gender/size and shows the correct extra field via JS when a special category is selected
+- Validation is in `ItemForm.clean()` (not `Item.clean()`, since `Item.save()` doesn't call `full_clean()`)
+
+**Auto-assignment** (`_try_auto_assign_special` in views.py):
+- Called from `add_item` view after each item is saved
+- Also called from `process_special_lapses` (Pass 2) after lapses free up the queue
+- Finds oldest active request for the same category (`order_by("requested_at")`)
+- Collection date = next occurrence of the same weekday as `req.requested_at` (`_next_walk_day(req.requested_at.weekday())`) — preserves the walk day
+- Creates Reservation via `res.save()` (cascades item→reserved), then `SpecialRequest.objects.filter(pk=...).update(status="fulfilled", ...)`
+
+**Lapse management command:** `inventory/management/commands/process_special_lapses.py`
+Run daily AFTER `process_lapses` (so freed items get re-queued in the same daily job):
+```
+... && python manage.py process_special_lapses >> lapses.log 2>&1
+```
+
+Pass 1 — lapse stale: `last_confirmed_at < now - 28 days` → `status="lapsed"` via `QuerySet.update()`
+Pass 2 — re-assign available special items to next in queue (FIFO by `requested_at`)
+
+**"Still Active" confirmation:** Any volunteer can press it; updates `last_confirmed_at=now()` via `QuerySet.update()`. Queue position (original `requested_at`) is unchanged. After confirming, the page redirects back to the Requests tab (`/inventory/volunteer/?tab=special`). The button renders as solid green "Confirmed" (disabled) if `last_confirmed_at.date() == today` — checked in template with `{% now "Y-m-d" as today_date %}` and `sr.last_confirmed_at|date:"Y-m-d" == today_date`. Cancel button on both volunteer and admin pages uses a Bootstrap modal for confirmation.
+
+**Volunteer view:** 3rd toggle tab "Requests" alongside Available/Reserved. Shows all active requests with "Still Active" button. Own requests get a "Cancel" button.
+
+**Admin view:** `/inventory/special-requests/` — paginated (10/page), layout matches missed_collections (same header, logo, Beta badge). Filter pills: All / Active / Assigned+Collected / Lapsed. Status column shows: Active (yellow), Assigned (blue, item reserved/packed), Collected (green, item given), Lapsed (grey) — all derived from `sr.status` + `sr.fulfilled_by_item.status` in the template, no extra model field needed. "Info" column in inventory shows yellow "Special" badge for `category.is_special` items.
+
+**Special filter pill** on inventory table: `?status=special` → `category__is_special=True` + excludes given.
+
 ## Test setup scripts
 
 **`seed_categories.py`** — run once (or re-run safely, uses `get_or_create`):
 ```bash
 python manage.py shell < seed_categories.py
 ```
-Creates 16 categories with 2-char codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and 7 routes with exact brand colours.
+Creates 16 standard categories + 3 special-request categories (Tent TE, Mobile Phone PH, SIM Card SI) with 2-char codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and 7 routes with exact brand colours. Safe to re-run — uses `get_or_create` throughout.
 
 **`seed_data.py`** — wipes items and reservations only (preserves users, categories, routes, sizes):
 ```bash
