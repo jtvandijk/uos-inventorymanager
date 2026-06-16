@@ -2,7 +2,8 @@
 # Safe to run multiple times — uses get_or_create throughout.
 # Usage: python manage.py shell < seed_categories.py
 
-from inventory.models import Category, SizeOption, Route
+from inventory.models import Category, Item, SizeOption, Route
+from django.utils import timezone
 
 print("Setting up size options (UK sizes)...")
 
@@ -80,7 +81,30 @@ for name, color, text_color in [
     status = "created" if created else "already exists"
     print(f"  {name} — {status}")
 
+print("Adding special request stock items...")
+
+for cat_name, device_code, sim_number in [
+    ("Tent",         "",                                       ""),
+    ("Mobile Phone", "Nokia 105 (4G) / IMEI 000000000000001", ""),
+    ("SIM Card",     "",                                       "07700 900001"),
+]:
+    cat = Category.objects.get(name=cat_name)
+    if not Item.objects.filter(category=cat).exists():
+        item = Item(
+            category=cat,
+            gender="unisex",
+            size="",
+            device_code=device_code,
+            sim_number=sim_number,
+            updated_at=timezone.now(),
+        )
+        item.save()
+        print(f"  {cat_name} ({item.code}) — created")
+    else:
+        print(f"  {cat_name} — already has stock, skipping")
+
 print("\nDone.")
 print(f"  {Category.objects.count()} categories")
 print(f"  {Route.objects.count()} routes")
 print(f"  {SizeOption.objects.count()} size options")
+print(f"  {Item.objects.filter(category__is_special=True).count()} special stock item(s)")

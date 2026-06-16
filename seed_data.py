@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from inventory.models import Category, Item, Reservation, Route, SizeOption
+from inventory.models import Category, Item, Reservation, Route, SizeOption, SpecialRequest
 
 NAMES = [
     "James S", "Sarah M", "Ahmed K", "Maria T", "Tom B",
@@ -20,14 +20,15 @@ NAMES = [
     "Elena B", "Mike D", "Tamil K", "Yusuf W", "Rachel T",
 ]
 
-print("Wiping items and reservations...")
+print("Wiping items, reservations, and special requests...")
+SpecialRequest.objects.all().delete()
 Reservation.objects.all().delete()
 Item.objects.all().delete()
 
 user = User.objects.filter(is_superuser=True).first() or User.objects.first()
 today = date.today()
 
-categories = list(Category.objects.all())
+categories = list(Category.objects.filter(is_special=False))
 routes = list(Route.objects.all())
 
 if not categories:
@@ -51,11 +52,11 @@ size_map = {
 
 genders = ["male", "female", "unisex"]
 
-# -- Create 50 items --
-print("Creating 50 items...")
+# -- Create 100 items --
+print("Creating 100 items...")
 
 items = []
-for _ in range(50):
+for _ in range(100):
     cat = random.choice(categories)
     size_pool = size_map.get(cat.size_type, [""])
     size = random.choice(size_pool) if size_pool != [""] else ""
@@ -73,9 +74,9 @@ for _ in range(50):
     items.append(item)
 
 # -- Distribution: ~8% reserved, ~2% packed, ~2% given, rest available --
-n_reserved = 4
-n_packed   = 1
-n_given    = 1
+n_reserved = 8
+n_packed   = 2
+n_given    = 2
 
 shuffled = random.sample(items, len(items))
 to_reserve = shuffled[:n_reserved]
@@ -120,3 +121,4 @@ print(f"  {Item.objects.filter(status='available').count()} available")
 print(f"  {Item.objects.filter(status='reserved').count()} reserved")
 print(f"  {Item.objects.filter(status='packed').count()} packed")
 print(f"  {Item.objects.filter(status='given').count()} collected")
+print(f"  (special request stock and special requests not seeded — run seed_categories.py for stock)")
