@@ -54,13 +54,26 @@
         </div>
     </div>
 
+    <!-- Admin nav -->
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" href="{% url 'inventory' %}">Inventory</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin_special_requests' %}">Special Requests</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'missed_collections' %}">Missed Collections</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'run_sheet' %}">Run Sheet</a>
+        </li>
+    </ul>
+
     <!-- Actions row -->
     <div class="d-flex justify-content-end mb-3">
         {% if is_admin %}
         <div class="d-flex gap-2">
-            <a href="{% url 'missed_collections' %}" class="btn btn-outline-dark btn-sm">Missed Collections</a>
-            <a href="{% url 'admin_special_requests' %}" class="btn btn-outline-dark btn-sm">Special Requests</a>
-            <a href="{% url 'run_sheet' %}" class="btn btn-outline-dark btn-sm">Run Sheet</a>
             <a href="{% url 'create_special_request' %}?next={{ request.get_full_path }}" class="btn btn-warning btn-sm">+ Special Request</a>
             <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success btn-sm">+ Add Item</a>
         </div>
@@ -127,7 +140,7 @@
 
         <th class="text-center">Reserved For</th>
         <th class="text-center">Info</th>
-        <th class="text-center">Details</th>
+        <th class="text-center">Actions</th>
 
     </tr>
     </thead>

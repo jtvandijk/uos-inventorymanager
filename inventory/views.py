@@ -640,7 +640,19 @@ def create_special_request(request):
             sr = form.save(commit=False)
             sr.requested_by = request.user
             sr.save()
-            messages.success(request, f"Special request for {sr.person} ({sr.category.name}) added to the queue.")
+            available_item = Item.objects.filter(category=sr.category, status="available").first()
+            if available_item:
+                assigned_req = _try_auto_assign_special(available_item, by_user=request.user)
+                if assigned_req:
+                    messages.success(
+                        request,
+                        f"Stock found — {assigned_req.person}'s request for {sr.category.name} "
+                        f"was immediately assigned to {available_item.code}."
+                    )
+                else:
+                    messages.success(request, f"Special request for {sr.person} ({sr.category.name}) added to the queue.")
+            else:
+                messages.success(request, f"Special request for {sr.person} ({sr.category.name}) added to the queue.")
             return redirect(next_url)
     else:
         form = SpecialRequestForm()

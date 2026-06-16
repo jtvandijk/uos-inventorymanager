@@ -42,14 +42,27 @@
         </div>
     </div>
 
+    <!-- Admin nav -->
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'inventory' %}">Inventory</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{% url 'admin_special_requests' %}">Special Requests</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'missed_collections' %}">Missed Collections</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'run_sheet' %}">Run Sheet</a>
+        </li>
+    </ul>
+
     <!-- Title + actions -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Special Requests</h5>
-        <div class="d-flex gap-2">
-            <a href="{% url 'create_special_request' %}?next={% url 'admin_special_requests' %}"
-               class="btn btn-warning btn-sm">+ New Request</a>
-            <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-sm">Back to Inventory</a>
-        </div>
+        <a href="{% url 'create_special_request' %}?next={% url 'admin_special_requests' %}"
+           class="btn btn-warning btn-sm">+ New Request</a>
     </div>
 
     <!-- Status filter pills -->
@@ -148,7 +161,12 @@
                     </button>
                 </div>
                 {% else %}
+                {% if sr.fulfilled_by_item %}
+                <a href="{% url 'view_item' sr.fulfilled_by_item.id %}?next={% url 'admin_special_requests' %}{% if status_filter %}?status={{ status_filter }}{% endif %}"
+                   class="btn btn-sm btn-outline-primary">View Item</a>
+                {% else %}
                 <span class="text-muted">—</span>
+                {% endif %}
                 {% endif %}
             </td>
         </tr>
