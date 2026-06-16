@@ -23,3 +23,8 @@ staticfiles/
 
 # Logs
 *.log
+
+# Scraping
+scraped/
+scraped_text/
+crawl_uos.py
