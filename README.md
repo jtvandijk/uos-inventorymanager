@@ -15,7 +15,7 @@ Built and maintained by a solo volunteer.
 - **Run sheet** — per-date, per-route picking list with AJAX pack toggling and print support
 - **Missed Collections** — admin log of reservations that lapsed or could not be re-assigned, for tracking patterns over time
 - **Two roles** — Admin (full access) and Volunteer (reserve, cancel/edit own reservations, mark collected, re-assign, file special requests)
-- **Search & filter** — search by item code, category, or person; filter by status (including combined Pending = reserved + packed, Special = special-category items); sortable columns; paginated
+- **Search & filter** — volunteer view: search by item code, category, or person name; filter by status (Available / Reserved / Packed / Special); sortable columns; paginated
 - **Resource hub** — public `/resources/` page with volunteer guidelines, policies, and reference information (no login required)
 
 ## Tech stack

@@ -10,19 +10,32 @@
 
     <style>
         @media print {
+            @page { size: landscape; margin: 0.5cm; }
+
             /* Hide all screen UI */
             .no-print { display: none !important; }
 
             /* Clean page */
-            body { background: white !important; font-family: monospace; font-size: 12pt; }
+            html, body { background: white !important; margin: 0 !important; padding: 0 !important; font-size: 10pt; }
+
+            /* Remove container max-width constraint */
+            .container { max-width: none !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+
+            /* Remove table-responsive overflow clipping */
+            .table-responsive { overflow: visible !important; }
 
             /* Plain print header */
-            .print-header { display: block !important; margin-bottom: 16pt; border-bottom: 1pt solid black; padding-bottom: 8pt; }
+            .print-header { display: block !important; margin-bottom: 12pt; border-bottom: 1pt solid black; padding-bottom: 6pt; }
 
             /* Strip table styling — plain lines only */
             table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1pt solid #aaa; padding: 4pt 6pt; text-align: left; }
-            thead { background: none !important; }
+            th, td { border: 1pt solid #aaa; padding: 3pt 5pt; text-align: left; }
+            thead, thead tr, thead th { background: none !important; background-color: white !important; }
+            tbody tr, tbody td { background: none !important; background-color: white !important; color: black !important; }
+
+            /* Strip Bootstrap table variant colours (striped, info, etc.) */
+            .table, .table-striped, .table-bordered { --bs-table-bg: transparent; --bs-table-striped-bg: transparent; --bs-table-hover-bg: transparent; --bs-table-active-bg: transparent; }
+            .table-info, .table-success, .table-warning { --bs-table-bg: transparent; background-color: white !important; }
 
             /* Show route/badges as plain text */
             .badge { background: none !important; color: black !important; border: none !important; font-weight: bold; padding: 0; }
@@ -36,7 +49,7 @@
 <body class="bg-light">
 
 <!-- Print-only header -->
-<div class="print-header container">
+<div class="print-header">
     <strong>UOS Inventory Manager — Run Sheet</strong><br>
     {{ selected_date|date:"l, d F Y" }}{% if selected_route %} &mdash; {{ selected_route.name }}{% endif %}
 </div>
@@ -59,6 +72,11 @@
             <span class="text-muted small">
                 Signed in as <strong>{{ request.user.username }}</strong>
             </span>
+            <a href="{% url 'volunteer' %}" class="btn btn-outline-primary btn-sm no-print">Volunteer View</a>
+            <form method="post" action="{% url 'logout' %}" class="m-0 no-print">
+                {% csrf_token %}
+                <button class="btn btn-outline-secondary btn-sm">Logout</button>
+            </form>
         </div>
 
     </div>

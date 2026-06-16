@@ -118,9 +118,7 @@ def inventory_view(request):
     search = request.GET.get("search")
     sort = request.GET.get("sort", "code")
 
-    if status == "pending":
-        items = items.filter(status__in=["reserved", "packed"])
-    elif status == "special":
+    if status == "special":
         items = items.filter(category__is_special=True).exclude(status="given")
     elif status:
         items = items.filter(status=status)
@@ -283,7 +281,7 @@ def edit_reservation(request, reservation_id):
 
 @login_required
 def cancel_reservation(request, item_id):
-    item = get_object_or_404(Item, id=item_id)
+    item = get_object_or_404(Item.objects.select_related("category"), id=item_id)
 
     reservation = Reservation.objects.filter(
         item=item,
@@ -293,7 +291,16 @@ def cancel_reservation(request, item_id):
     if reservation and (
         reservation.reserved_by == request.user or is_admin(request.user)
     ):
-        reservation.delete()
+        if item.category.is_special:
+            sr = SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled").first()
+            if sr:
+                SpecialRequest.objects.filter(pk=sr.pk).update(
+                    status="lapsed",
+                    lapsed_at=timezone.now(),
+                )
+        reservation.delete()  # sets item → available via model override
+        if item.category.is_special:
+            _try_auto_assign_special(item, by_user=request.user)
         messages.success(request, "Reservation cancelled.")
 
     return redirect(request.GET.get("next") or "/inventory/")
@@ -503,13 +510,18 @@ def reassign_item(request, item_id):
                 f"No replacement {item.category.name} in stock. {person}'s special request has been returned to the queue.",
             )
         else:
-            # Regular item: keep reservation active so lapse logic applies (7-day extension, then release)
-            miss_note = f"Item {item.code} given to another person on {timezone.now().date()} — no replacement found yet, reservation kept active."
+            # Regular item: item is definitively gone, log immediately as missed
+            miss_note = f"Item {item.code} given to another person on {timezone.now().date()} — no replacement available."
             new_notes = (reservation.notes + "\n" + miss_note) if reservation.notes else miss_note
-            Reservation.objects.filter(pk=reservation.pk).update(notes=new_notes)
+            Reservation.objects.filter(pk=reservation.pk).update(
+                status="missed",
+                miss_reason="no_replacement",
+                missed_at=timezone.now(),
+                notes=new_notes,
+            )
             messages.warning(
                 request,
-                f"No matching item in stock. {person}'s reservation has been kept active — lapse logic will apply.",
+                f"No replacement in stock. {person}'s reservation has been logged in Missed Collections.",
             )
 
         return redirect(next_url)
@@ -520,15 +532,31 @@ def missed_collections_view(request):
     if not is_admin(request.user):
         return redirect("volunteer")
 
-    missed_qs = Reservation.objects.filter(
-        status="missed",
-    ).select_related("item", "item__category", "route").order_by("-missed_at", "-reserved_for_date")
+    sort = request.GET.get("sort", "-missed_at")
+    reason_filter = request.GET.get("reason", "")
+    allowed_sorts = {
+        "person": "person", "-person": "-person",
+        "code": "item__code", "-code": "-item__code",
+        "category": "item__category__name", "-category": "-item__category__name",
+        "gender": "item__gender", "-gender": "-item__gender",
+        "size": "item__size", "-size": "-item__size",
+        "date": "reserved_for_date", "-date": "-reserved_for_date",
+        "route": "route__name", "-route": "-route__name",
+        "reason": "miss_reason", "-reason": "-miss_reason",
+        "missed_at": "missed_at", "-missed_at": "-missed_at",
+    }
+    missed_qs = Reservation.objects.filter(status="missed").select_related("item", "item__category", "route")
+    if reason_filter == "lapsed":
+        missed_qs = missed_qs.filter(miss_reason="lapsed")
+    elif reason_filter == "no_replacement":
+        missed_qs = missed_qs.filter(miss_reason="no_replacement")
+    missed_qs = missed_qs.order_by(allowed_sorts.get(sort, "-missed_at"))
 
     paginator = Paginator(missed_qs, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
     elided_range = list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
 
-    context = {"page_obj": page_obj, "elided_range": elided_range}
+    context = {"page_obj": page_obj, "elided_range": elided_range, "sort": sort, "reason_filter": reason_filter}
     return render(request, "inventory/missed_collections.html", add_role_context(request, context))
 
 
@@ -590,7 +618,7 @@ def volunteer_view(request):
             Q(reservation__person__icontains=search)
         ).distinct()
 
-    paginator = Paginator(items.order_by("code"), 5)
+    paginator = Paginator(items.order_by("code"), 3)
     page_obj = paginator.get_page(request.GET.get("page"))
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
@@ -603,33 +631,37 @@ def volunteer_view(request):
 
     my_res = Reservation.objects.filter(
         reserved_by=request.user,
-        status="reserved"
-    )
+        status="reserved",
+    ).exclude(item__fulfilled_special_request__status="fulfilled")
 
-    res_page_obj = Paginator(my_res.order_by("-id"), 5).get_page(
+    res_page_obj = Paginator(my_res.order_by("-id"), 3).get_page(
         request.GET.get("res_page")
     )
+
+    # Fulfilled SRs whose collection date is today — shown so volunteers can collect
+    sr_fulfilled_qs = SpecialRequest.objects.filter(
+        status="fulfilled",
+        fulfilled_by_item__reservation__reserved_for_date=timezone.localdate(),
+        fulfilled_by_item__reservation__status__in=["reserved", "packed"],
+    ).select_related("category", "route", "requested_by", "fulfilled_by_item").order_by("fulfilled_at")
 
     sr_qs = SpecialRequest.objects.filter(
         status="active",
     ).select_related("category", "route", "requested_by").order_by("requested_at")
-    sr_paginator = Paginator(sr_qs, 5)
+    sr_paginator = Paginator(sr_qs, 3)
     sr_page_obj = sr_paginator.get_page(request.GET.get("sr_page"))
     sr_elided_range = list(sr_paginator.get_elided_page_range(sr_page_obj.number, on_each_side=2, on_ends=1))
 
-    res_elided_range = list(
-        Paginator(my_res.order_by("-id"), 5).get_elided_page_range(res_page_obj.number, on_each_side=2, on_ends=1)
-    )
 
     context = {
         "page_obj": page_obj,
         "my_reservations": res_page_obj,
         "res_page_obj": res_page_obj,
-        "res_elided_range": res_elided_range,
         "search": search,
         "status_filter": status_filter,
         "sr_page_obj": sr_page_obj,
         "sr_elided_range": sr_elided_range,
+        "sr_fulfilled": sr_fulfilled_qs,
     }
 
     return render(
@@ -680,18 +712,42 @@ def admin_special_requests_view(request):
         return redirect("volunteer")
 
     status_filter = request.GET.get("status", "")
+    sort = request.GET.get("sort", "-requested_at")
+    allowed_sorts = {
+        "person": "person", "-person": "-person",
+        "category": "category__name", "-category": "-category__name",
+        "route": "route__name", "-route": "-route__name",
+        "requested_at": "requested_at", "-requested_at": "-requested_at",
+        "last_confirmed_at": "last_confirmed_at", "-last_confirmed_at": "-last_confirmed_at",
+        "status": "status", "-status": "-status",
+        "item": "fulfilled_by_item__code", "-item": "-fulfilled_by_item__code",
+    }
+
     qs = SpecialRequest.objects.select_related(
         "category", "route", "requested_by", "fulfilled_by_item"
     )
-    if status_filter:
-        qs = qs.filter(status=status_filter)
-    qs = qs.order_by("-requested_at")
+    if status_filter == "all":
+        pass
+    elif status_filter == "collected":
+        qs = qs.filter(status="fulfilled", fulfilled_by_item__status="given")
+    elif status_filter == "lapsed":
+        qs = qs.filter(status="lapsed")
+    elif status_filter == "active":
+        qs = qs.filter(status="active")
+    else:
+        # Default: active + assigned (fulfilled but item not yet given)
+        qs = qs.filter(
+            Q(status="active") |
+            Q(status="fulfilled", fulfilled_by_item__status__in=["reserved", "packed"])
+        )
+
+    qs = qs.order_by(allowed_sorts.get(sort, "-requested_at"))
 
     paginator = Paginator(qs, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
     elided_range = list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
 
-    context = {"page_obj": page_obj, "elided_range": elided_range, "status_filter": status_filter}
+    context = {"page_obj": page_obj, "elided_range": elided_range, "status_filter": status_filter, "sort": sort}
     return render(request, "inventory/admin_special_requests.html", add_role_context(request, context))
 
 

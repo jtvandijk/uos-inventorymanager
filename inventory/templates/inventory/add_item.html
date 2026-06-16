@@ -59,7 +59,7 @@
                         {% if form.sim_number.errors %}<div class="text-danger small mt-1">{{ form.sim_number.errors }}</div>{% endif %}
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-4" id="quantityWrapper">
                         <label for="id_quantity" class="form-label">Quantity</label>
                         {{ form.quantity }}
                         <div class="form-text">Number of identical items to add in one go.</div>
@@ -119,6 +119,13 @@ document.addEventListener("DOMContentLoaded", function () {
         standardFields.style.display = isSpecial ? "none" : "block";
         fieldDeviceCode.style.display = (extraField === "device_code") ? "block" : "none";
         fieldSimNumber.style.display = (extraField === "sim_number") ? "block" : "none";
+
+        const hasExtraField = (extraField === "device_code" || extraField === "sim_number");
+        const quantityWrapper = document.getElementById("quantityWrapper");
+        if (quantityWrapper) {
+            quantityWrapper.style.display = hasExtraField ? "none" : "block";
+            if (hasExtraField) quantityField.value = 1;
+        }
 
         if (!isSpecial && categoryId) updateSizes(categoryId);
     }

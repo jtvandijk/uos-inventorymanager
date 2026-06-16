@@ -1,3 +1,4 @@
+import re
 from datetime import date
 
 from django import forms
@@ -55,10 +56,18 @@ class ItemForm(forms.ModelForm):
         cleaned = super().clean()
         category = cleaned.get("category")
         if category:
+            if category.is_special:
+                cleaned["quantity"] = 1
             if category.extra_field == "device_code" and not cleaned.get("device_code"):
                 self.add_error("device_code", "Device code is required for this category.")
-            if category.extra_field == "sim_number" and not cleaned.get("sim_number"):
-                self.add_error("sim_number", "SIM number is required for this category.")
+            if category.extra_field == "sim_number":
+                sim = cleaned.get("sim_number", "")
+                if not sim:
+                    self.add_error("sim_number", "SIM number is required for this category.")
+                else:
+                    digits = re.sub(r"[\s\-\(\)]", "", sim)
+                    if not re.match(r"^(07\d{9}|\+447\d{9})$", digits):
+                        self.add_error("sim_number", "Enter a valid UK mobile number (e.g. 07700 900123 or +44 7700 900123).")
         return cleaned
 
 

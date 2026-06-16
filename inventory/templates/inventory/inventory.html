@@ -70,8 +70,9 @@
         </li>
     </ul>
 
-    <!-- Actions row -->
-    <div class="d-flex justify-content-end mb-3">
+    <!-- Title + actions row -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Inventory</h5>
         {% if is_admin %}
         <div class="d-flex gap-2">
             <a href="{% url 'create_special_request' %}?next={{ request.get_full_path }}" class="btn btn-warning btn-sm">+ Special Request</a>
@@ -80,22 +81,31 @@
         {% endif %}
     </div>
 
-    <!-- Search (directly above table) -->
+    <!-- Search + filter bar -->
     <form id="filterForm" method="get">
         <input type="hidden" name="status" id="statusInput" value="{{ request.GET.status|default:'' }}">
         <input type="hidden" name="sort" value="{{ sort }}">
 
-        <div class="d-flex align-items-center gap-2 mb-2">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <span class="text-muted small">Filter:</span>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'special' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="special">Special</button>
+
+            <!--
+            <div class="vr d-none d-sm-block"></div>
             <input type="text"
                    name="search"
                    id="searchInput"
                    value="{{ request.GET.search|default:'' }}"
                    class="form-control"
-                   placeholder="Search inventory…"
-                   style="max-width: 260px;"
+                   placeholder="Search by ID, category, or name…"
+                   style="max-width: 220px;"
                    autocomplete="off">
+            -->
 
-            {% if request.GET.search or request.GET.status %}
+            {% if request.GET.status %}
             <a href="{% url 'inventory' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
             {% endif %}
         </div>
@@ -267,16 +277,6 @@
         </ul>
     </div>
 
-    <!-- Status pills -->
-    <div class="d-flex flex-wrap gap-1 pt-2 border-top">
-        <span class="text-muted small me-1 align-self-center">Filter:</span>
-        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
-        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'pending' %}btn-info text-dark{% else %}btn-outline-secondary{% endif %}" data-status="pending">Pending</button>
-        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
-        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
-        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'given' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" data-status="given">Collected</button>
-        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'special' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="special">Special</button>
-    </div>
 
 </div>
 
@@ -288,6 +288,13 @@ const statusInput = document.getElementById('statusInput');
 const searchInput = document.getElementById('searchInput');
 let searchTimeout;
 
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() { filterForm.submit(); }, 400);
+    });
+}
+
 document.querySelectorAll('.status-pill').forEach(function(pill) {
     pill.addEventListener('click', function() {
         const newStatus = this.dataset.status;
@@ -297,10 +304,6 @@ document.querySelectorAll('.status-pill').forEach(function(pill) {
     });
 });
 
-searchInput.addEventListener('input', function() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(function() { filterForm.submit(); }, 400);
-});
 
 function initAlerts() {
     document.querySelectorAll('.alert').forEach(function(alert) {

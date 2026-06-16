@@ -35,6 +35,7 @@
             <span class="text-muted small">
                 Signed in as <strong>{{ request.user.username }}</strong>
             </span>
+            <a href="{% url 'volunteer' %}" class="btn btn-outline-primary btn-sm">Volunteer View</a>
             <form method="post" action="{% url 'logout' %}" class="m-0">
                 {% csrf_token %}
                 <button class="btn btn-outline-secondary btn-sm">Logout</button>
@@ -61,21 +62,26 @@
     <!-- Title + actions -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Special Requests</h5>
-        <a href="{% url 'create_special_request' %}?next={% url 'admin_special_requests' %}"
-           class="btn btn-warning btn-sm">+ New Request</a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'create_special_request' %}?next={% url 'admin_special_requests' %}"
+               class="btn btn-warning btn-sm">+ Special Request</a>
+            <a href="{% url 'add_item' %}?next={% url 'admin_special_requests' %}"
+               class="btn btn-success btn-sm">+ Add Item</a>
+        </div>
     </div>
 
     <!-- Status filter pills -->
     <div class="d-flex flex-wrap gap-1 mb-3">
         <span class="text-muted small me-1 align-self-center">Filter:</span>
-        <a href="{% url 'admin_special_requests' %}"
-           class="btn btn-sm {% if not status_filter %}btn-dark{% else %}btn-outline-secondary{% endif %}">All</a>
         <a href="?status=active"
            class="btn btn-sm {% if status_filter == 'active' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}">Active</a>
-        <a href="?status=fulfilled"
-           class="btn btn-sm {% if status_filter == 'fulfilled' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Assigned / Collected</a>
+        <a href="?status=collected"
+           class="btn btn-sm {% if status_filter == 'collected' %}btn-success{% else %}btn-outline-secondary{% endif %}">Collected</a>
         <a href="?status=lapsed"
            class="btn btn-sm {% if status_filter == 'lapsed' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Lapsed</a>
+        {% if status_filter %}
+        <a href="{% url 'admin_special_requests' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+        {% endif %}
     </div>
 
     <!-- Table -->
@@ -83,14 +89,13 @@
     <table class="table table-bordered table-striped text-center align-middle">
         <thead class="table-light">
         <tr>
-            <th>Person</th>
-            <th>Category</th>
-            <th>Route</th>
-            <th>Requested</th>
-            <th>Last Confirmed</th>
-            <th>Status</th>
-            <th>Item</th>
-            <th>Notes</th>
+            <th><a href="?sort={% if sort == 'person' %}-person{% else %}person{% endif %}&status={{ status_filter }}&page=1" class="text-dark text-decoration-none">Person ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'category' %}-category{% else %}category{% endif %}&status={{ status_filter }}&page=1" class="text-dark text-decoration-none">Category ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'route' %}-route{% else %}route{% endif %}&status={{ status_filter }}&page=1" class="text-dark text-decoration-none">Route ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'requested_at' %}-requested_at{% else %}requested_at{% endif %}&status={{ status_filter }}&page=1" class="text-dark text-decoration-none">Requested ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'last_confirmed_at' %}-last_confirmed_at{% else %}last_confirmed_at{% endif %}&status={{ status_filter }}&page=1" class="text-dark text-decoration-none">Last Confirmed ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'status' %}-status{% else %}status{% endif %}&status={{ status_filter }}&page=1" class="text-dark text-decoration-none">Status ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'item' %}-item{% else %}item{% endif %}&status={{ status_filter }}&page=1" class="text-dark text-decoration-none">Item ▲▼</a></th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -116,7 +121,13 @@
             </td>
             <td>
                 {% if sr.status == "active" %}
+                    {% now "Y-m-d" as today_date %}
+                    {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
                     <span class="badge bg-warning text-dark">Active</span>
+                    <span class="badge bg-success ms-1"><i class="bi bi-check-circle-fill me-1"></i>Confirmed</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark">Active</span>
+                    {% endif %}
                 {% elif sr.status == "lapsed" %}
                     <span class="badge bg-secondary">Lapsed</span>
                 {% elif sr.status == "fulfilled" %}
@@ -134,23 +145,16 @@
                     <span class="text-muted">—</span>
                 {% endif %}
             </td>
-            <td class="text-start text-muted small" style="max-width:180px; white-space: pre-wrap;">
-                {{ sr.notes|default:"—" }}
-            </td>
             <td>
+                <div class="d-flex gap-1 justify-content-center">
                 {% if sr.status == "active" %}
-                <div class="d-flex flex-column gap-1 align-items-center">
                     {% now "Y-m-d" as today_date %}
-                    {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
-                    <button class="btn btn-sm btn-success" disabled style="opacity:1;">
-                        <i class="bi bi-check-circle-fill me-1"></i>Confirmed
-                    </button>
-                    {% else %}
+                    {% if sr.last_confirmed_at|date:"Y-m-d" != today_date %}
                     <form method="post" action="{% url 'confirm_special_request' sr.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'admin_special_requests' %}{% if status_filter %}?status={{ status_filter }}{% endif %}">
                         <button class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-check-circle me-1"></i>Still Active
+                            <i class="bi bi-check-circle"></i>
                         </button>
                     </form>
                     {% endif %}
@@ -159,20 +163,40 @@
                             data-bs-target="#cancelModal{{ sr.id }}">
                         Cancel
                     </button>
+                    {% if sr.notes %}
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#notesModal{{ sr.id }}">
+                        <i class="bi bi-chat-text"></i>
+                    </button>
+                    {% endif %}
+                {% elif sr.fulfilled_by_item %}
+                    <a href="{% url 'view_item' sr.fulfilled_by_item.id %}?next={% url 'admin_special_requests' %}{% if status_filter %}?status={{ status_filter }}{% endif %}"
+                       class="btn btn-sm btn-primary">View</a>
+                    {% if sr.notes %}
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#notesModal{{ sr.id }}">
+                        <i class="bi bi-chat-text"></i>
+                    </button>
+                    {% endif %}
+                {% else %}
+                    {% if sr.notes %}
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#notesModal{{ sr.id }}">
+                        <i class="bi bi-chat-text"></i>
+                    </button>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                {% endif %}
                 </div>
-                {% else %}
-                {% if sr.fulfilled_by_item %}
-                <a href="{% url 'view_item' sr.fulfilled_by_item.id %}?next={% url 'admin_special_requests' %}{% if status_filter %}?status={{ status_filter }}{% endif %}"
-                   class="btn btn-sm btn-primary">View</a>
-                {% else %}
-                <span class="text-muted">—</span>
-                {% endif %}
-                {% endif %}
             </td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="9" class="text-muted py-4">No special requests found.</td>
+            <td colspan="8" class="text-muted py-4">No special requests found.</td>
         </tr>
         {% endfor %}
         </tbody>
@@ -180,7 +204,6 @@
     </div>
 
     <!-- Pagination -->
-    {% if page_obj.paginator.num_pages > 1 %}
     <div class="d-flex justify-content-between align-items-center mt-3">
         <span class="text-muted small">
             Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}
@@ -188,7 +211,7 @@
         <ul class="pagination mb-0">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}">Previous</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&sort={{ sort }}">Previous</a>
             </li>
             {% endif %}
             {% for num in elided_range %}
@@ -196,20 +219,40 @@
             <li class="page-item disabled"><span class="page-link">…</span></li>
             {% else %}
             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}&status={{ status_filter }}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}&status={{ status_filter }}&sort={{ sort }}">{{ num }}</a>
             </li>
             {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}">Next</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&sort={{ sort }}">Next</a>
             </li>
             {% endif %}
         </ul>
     </div>
-    {% endif %}
+
 
 </div>
+
+<!-- Notes modals -->
+{% for sr in page_obj %}
+{% if sr.notes %}
+<div class="modal fade" id="notesModal{{ sr.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Notes — {{ sr.person }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="white-space: pre-wrap;">{{ sr.notes }}</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
 
 <!-- Confirmation modals for each active cancel -->
 {% for sr in page_obj %}

@@ -108,9 +108,8 @@ If no replacement available — **two paths depending on item type:**
 
 **Regular item:**
 - Set `item.status = "given"`, `item.save()`
-- Leave reservation as `status="reserved"` (just append a note) — do NOT mark as missed
-- `process_lapses` handles it: 7-day extension on first miss, then `status="missed" miss_reason="lapsed"` on second miss
-- `process_lapses` Pass 1 guards against resetting a "given" item to "available": `Item.objects.filter(pk=..., status__in=["reserved","packed"]).update(status="available")` — if the item is already "given", the update is a no-op
+- Immediately mark reservation `status="missed", miss_reason="no_replacement", missed_at=now()` — item is definitively gone, no point waiting through lapse cycle
+- Appears in Missed Collections with reason "No replacement"
 
 **Special request item (category.is_special=True):**
 - Set `item.status = "given"`, `item.save()`
@@ -131,6 +130,16 @@ Stores reservations with `status="missed"`. Reasons:
 
 Missed reservations stay linked to their original item in the DB. New reservations can be created for the same item without conflict — `Reservation.clean()` only checks `status="reserved"`.
 
+Notes on missed reservations are always system-generated (appended by `process_lapses` or `reassign_item`). No chat-icon is shown — the Reason badge and View → view_item are sufficient. Filter pills: Lapsed / No Replacement (no default; Clear appears when filter active).
+
+## Cancel reservation
+
+`cancel_reservation` calls `reservation.delete()` which sets `item.status = "available"` via the model override.
+
+**For special items:** before deleting the reservation, the linked `SpecialRequest` (`fulfilled_by_item=item, status="fulfilled"`) is lapsed (`status="lapsed"`). After delete, `_try_auto_assign_special` fires immediately to give the item to the next person in queue. Cancelling is a deliberate volunteer action meaning the person no longer needs the item — the SR is done.
+
+**For regular items:** just `reservation.delete()`. Item returns to available. No queue to re-assign to.
+
 ## Special request system
 
 Handles items not normally in stock (Tent, Mobile Phone, SIM Card). Categories are flagged with `Category.is_special=True`.
@@ -145,7 +154,7 @@ status = CharField(choices=[("active","Active"),("fulfilled","Fulfilled"),("laps
 requested_by = ForeignKey(User, null=True)
 requested_at = DateTimeField(auto_now_add=True)
 last_confirmed_at = DateTimeField(auto_now_add=True)  # reset by "Still Active"
-fulfilled_by_item = ForeignKey(Item, null=True, blank=True)
+fulfilled_by_item = ForeignKey(Item, null=True, blank=True, related_name="fulfilled_special_request")
 fulfilled_at = DateTimeField(null=True, blank=True)
 lapsed_at = DateTimeField(null=True, blank=True)
 ```
@@ -172,11 +181,23 @@ Run daily AFTER `process_lapses` (so freed items get re-queued in the same daily
 Pass 1 — lapse stale: `last_confirmed_at < now - 28 days` → `status="lapsed"` via `QuerySet.update()`
 Pass 2 — re-assign available special items to next in queue (FIFO by `requested_at`)
 
-**"Still Active" confirmation:** Any volunteer can press it; updates `last_confirmed_at=now()` via `QuerySet.update()`. Queue position (original `requested_at`) is unchanged. After confirming, the page redirects back to the Requests tab (`/inventory/volunteer/?tab=special`). The button renders as solid green "Confirmed" (disabled) if `last_confirmed_at.date() == today` — checked in template with `{% now "Y-m-d" as today_date %}` and `sr.last_confirmed_at|date:"Y-m-d" == today_date`. Cancel button on both volunteer and admin pages uses a Bootstrap modal for confirmation.
+**"Still Active" confirmation:** Any volunteer can press it; updates `last_confirmed_at=now()` via `QuerySet.update()`. Queue position (original `requested_at`) is unchanged.
 
-**Volunteer view:** 3rd toggle tab "Requests" alongside Available/Reserved. Shows all active requests with "Still Active" button. Own requests get a "Cancel" button.
+- **Volunteer page:** button renders as solid green "Confirmed" (disabled, `opacity:1`) if confirmed today, otherwise shows "Still Active". Checked with `{% now "Y-m-d" as today_date %}` and `sr.last_confirmed_at|date:"Y-m-d" == today_date`. After confirming, redirects to `/inventory/volunteer/?tab=special`.
+- **Admin page:** "Confirmed" badge appears inline in the Status column when confirmed today. Actions column shows an icon-only check-circle button only if not yet confirmed today.
 
-**Admin view:** `/inventory/special-requests/` — paginated (10/page), layout matches missed_collections (same header, logo, Beta badge). Filter pills: All / Active / Assigned+Collected / Lapsed. Status column shows: Active (yellow), Assigned (blue, item reserved/packed), Collected (green, item given), Lapsed (grey) — all derived from `sr.status` + `sr.fulfilled_by_item.status` in the template, no extra model field needed. "Info" column in inventory shows yellow "Special" badge for `category.is_special` items.
+Cancel button on both pages uses a Bootstrap modal for confirmation.
+
+**Volunteer view:** 3rd toggle tab "Requests" alongside Available/Reserved. Shows all active requests with "Still Active" button. Own requests get a "Cancel" button. A "Today's collections" section appears above the requests list showing fulfilled SRs whose `reserved_for_date` is today — with a packed/unpacked visual distinction (blue border + "Packed ✓" badge vs yellow border + "Not packed yet") and a View button to mark collected.
+
+My Reservations (top of volunteer page) excludes items auto-assigned via special request:
+```python
+my_res = Reservation.objects.filter(reserved_by=request.user, status="reserved"
+).exclude(item__fulfilled_special_request__status="fulfilled")
+```
+`fulfilled_special_request` is the `related_name` on `SpecialRequest.fulfilled_by_item`.
+
+**Admin view:** `/inventory/special-requests/` — paginated (10/page), layout matches missed_collections (same header, logo, Beta badge). Filter pills: Active / Collected / Lapsed (no default highlighted; Clear appears when a filter is active). Default view (no pill active) shows active + assigned (fulfilled with item not yet given). Status column shows: Active (yellow) + optional "Confirmed" badge (green) if confirmed today; Assigned (blue, item reserved/packed); Collected (green, item given); Lapsed (grey) — all derived from `sr.status` + `sr.fulfilled_by_item.status` in the template, no extra model field needed. "Info" column in inventory shows yellow "Special" badge for `category.is_special` items.
 
 **Special filter pill** on inventory table: `?status=special` → `category__is_special=True` + excludes given.
 

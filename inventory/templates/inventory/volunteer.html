@@ -45,10 +45,6 @@
                 </a>
                 {% endif %}
 
-                <a href="{% url 'resource_hub' %}" class="btn btn-outline-secondary btn-sm">
-                    Resources
-                </a>
-
                 <form method="post" action="{% url 'logout' %}" class="m-0">
                     {% csrf_token %}
                     <button class="btn btn-outline-secondary btn-sm">Logout</button>
@@ -110,7 +106,6 @@
         <p class="text-muted">No active reservations</p>
         {% endfor %}
 
-        {% if res_page_obj.paginator.num_pages > 1 %}
         <div class="d-flex justify-content-center mt-2 mb-1">
             <ul class="pagination pagination-sm mb-0">
                 {% if res_page_obj.has_previous %}
@@ -118,15 +113,9 @@
                     <a class="page-link" href="?res_page={{ res_page_obj.previous_page_number }}">&laquo; Prev</a>
                 </li>
                 {% endif %}
-                {% for num in res_elided_range %}
-                {% if num == "…" %}
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-                {% else %}
-                <li class="page-item {% if res_page_obj.number == num %}active{% endif %}">
-                    <a class="page-link" href="?res_page={{ num }}">{{ num }}</a>
+                <li class="page-item disabled">
+                    <span class="page-link">{{ res_page_obj.number }} / {{ res_page_obj.paginator.num_pages }}</span>
                 </li>
-                {% endif %}
-                {% endfor %}
                 {% if res_page_obj.has_next %}
                 <li class="page-item">
                     <a class="page-link" href="?res_page={{ res_page_obj.next_page_number }}">Next &raquo;</a>
@@ -134,7 +123,6 @@
                 {% endif %}
             </ul>
         </div>
-        {% endif %}
 
 
         <!-- Items -->
@@ -183,6 +171,45 @@
 
         <!-- Special Requests List (hidden by default) -->
         <div id="specialList" style="display:none;">
+
+            {% if sr_fulfilled %}
+            <div class="mb-3">
+                <div class="text-muted small mb-2"><strong>Today's collections</strong> — items assigned for today's outreach.</div>
+                {% for sr in sr_fulfilled %}
+                <div class="card p-3 mb-2 shadow-sm {% if sr.fulfilled_by_item.status == 'packed' %}border-primary{% else %}border-warning{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">{{ sr.person }}</div>
+                            <span class="badge bg-primary mb-1">{{ sr.category.name }}</span>
+                            {% if sr.route %}
+                            <span class="badge ms-1 mb-1"
+                                  style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
+                                {{ sr.route.name }}
+                            </span>
+                            {% endif %}
+                            {% if sr.fulfilled_by_item %}
+                            <div class="small mt-1 font-monospace text-muted">{{ sr.fulfilled_by_item.code }}
+                                {% if sr.fulfilled_by_item.status == "packed" %}
+                                <span class="badge bg-success ms-1">Packed ✓</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark ms-1">Not packed yet</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if sr.fulfilled_by_item %}
+                        <a href="{% url 'view_item' sr.fulfilled_by_item.id %}?next=/inventory/volunteer/?tab=special"
+                           class="btn btn-sm {% if sr.fulfilled_by_item.status == 'packed' %}btn-primary{% else %}btn-outline-warning{% endif %} flex-shrink-0">
+                            View
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <hr class="my-3">
+            {% endif %}
+
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-muted small">Active special requests — press <strong>Still Active</strong> to confirm the person still needs the item and reset the 4-week clock.</span>
             </div>

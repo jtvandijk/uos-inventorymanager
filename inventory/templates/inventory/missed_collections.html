@@ -30,6 +30,7 @@
             <span class="text-muted small">
                 Signed in as <strong>{{ request.user.username }}</strong>
             </span>
+            <a href="{% url 'volunteer' %}" class="btn btn-outline-primary btn-sm">Volunteer View</a>
             <form method="post" action="{% url 'logout' %}" class="m-0">
                 {% csrf_token %}
                 <button class="btn btn-outline-secondary btn-sm">Logout</button>
@@ -54,23 +55,36 @@
         </li>
     </ul>
 
-    <h5 class="mb-3">Missed Collections</h5>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Missed Collections</h5>
+    </div>
 
-    {% if page_obj %}
+    <!-- Filter pills -->
+    <div class="d-flex flex-wrap gap-1 mb-3">
+        <span class="text-muted small me-1 align-self-center">Filter:</span>
+        <a href="?reason=lapsed&sort={{ sort }}"
+           class="btn btn-sm {% if reason_filter == 'lapsed' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Lapsed</a>
+        <a href="?reason=no_replacement&sort={{ sort }}"
+           class="btn btn-sm {% if reason_filter == 'no_replacement' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}">No Replacement</a>
+        {% if reason_filter %}
+        <a href="{% url 'missed_collections' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
+        {% endif %}
+    </div>
+
     <div class="table-responsive">
     <table class="table table-bordered table-striped text-center align-middle">
         <thead class="table-light">
         <tr>
-            <th>Person</th>
-            <th>Item</th>
-            <th>Category</th>
-            <th>Gender</th>
-            <th>Size</th>
-            <th>Collection Date</th>
-            <th>Route</th>
-            <th>Reason</th>
-            <th>Recorded</th>
-            <th>Notes</th>
+            <th><a href="?sort={% if sort == 'person' %}-person{% else %}person{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Person ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Item ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'category' %}-category{% else %}category{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Category ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'gender' %}-gender{% else %}gender{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Gender ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'size' %}-size{% else %}size{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Size ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'date' %}-date{% else %}date{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Collection Date ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'route' %}-route{% else %}route{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Route ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'reason' %}-reason{% else %}reason{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Reason ▲▼</a></th>
+            <th><a href="?sort={% if sort == 'missed_at' %}-missed_at{% else %}missed_at{% endif %}&reason={{ reason_filter }}&page=1" class="text-dark text-decoration-none">Recorded ▲▼</a></th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -106,13 +120,16 @@
                 {% endif %}
             </td>
             <td class="text-muted small">
-                {% if res.missed_at %}
-                    {{ res.missed_at|date:"d M Y" }}
-                {% else %}
-                    -
-                {% endif %}
+                {% if res.missed_at %}{{ res.missed_at|date:"d M Y" }}{% else %}-{% endif %}
             </td>
-            <td class="text-start small text-muted" style="max-width: 200px; white-space: pre-wrap;">{{ res.notes|default:"-" }}</td>
+            <td>
+                <a href="{% url 'view_item' res.item.id %}?next={% url 'missed_collections' %}{% if reason_filter %}?reason={{ reason_filter }}{% endif %}"
+                   class="btn btn-sm btn-primary">View</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10" class="text-muted py-4">No missed collections on record.</td>
         </tr>
         {% endfor %}
         </tbody>
@@ -126,7 +143,7 @@
         <ul class="pagination mb-0">
             {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort={{ sort }}&reason={{ reason_filter }}">Previous</a>
             </li>
             {% endif %}
             {% for num in elided_range %}
@@ -134,24 +151,18 @@
             <li class="page-item disabled"><span class="page-link">…</span></li>
             {% else %}
             <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}&sort={{ sort }}&reason={{ reason_filter }}">{{ num }}</a>
             </li>
             {% endif %}
             {% endfor %}
             {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort={{ sort }}&reason={{ reason_filter }}">Next</a>
             </li>
             {% endif %}
         </ul>
     </div>
 
-    {% else %}
-    <div class="text-center text-muted py-5">
-        <i class="bi bi-check-circle fs-1 d-block mb-2"></i>
-        No missed collections on record.
-    </div>
-    {% endif %}
 
 </div>
 
