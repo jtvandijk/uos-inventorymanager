@@ -58,6 +58,7 @@
     <div class="d-flex justify-content-end mb-3">
         {% if is_admin %}
         <div class="d-flex gap-2">
+            <a href="{% url 'missed_collections' %}" class="btn btn-outline-dark btn-sm">Missed Collections</a>
             <a href="{% url 'run_sheet' %}" class="btn btn-outline-dark btn-sm">Run Sheet</a>
             <a href="{% url 'add_item' %}?next={{ request.get_full_path }}" class="btn btn-success btn-sm">+ Add Item</a>
         </div>
@@ -160,6 +161,10 @@
             {% for res in item.reservation_set.all %}
                 {% if res.status == "reserved" or res.status == "packed" %}
                     {{ res.reserved_for_date|date:"d M Y" }}
+                    {% if res.auto_extended %}
+                    <i class="bi bi-clock-history ms-1" style="color: #e67e22;"
+                       title="Date was automatically pushed by 7 days after a missed collection"></i>
+                    {% endif %}
                 {% endif %}
             {% empty %}
                 -
@@ -243,6 +248,7 @@
     <div class="d-flex flex-wrap gap-1 pt-2 border-top">
         <span class="text-muted small me-1 align-self-center">Filter:</span>
         <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
+        <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'pending' %}btn-info text-dark{% else %}btn-outline-secondary{% endif %}" data-status="pending">Pending</button>
         <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
         <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
         <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'given' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" data-status="given">Collected</button>

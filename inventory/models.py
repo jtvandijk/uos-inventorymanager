@@ -207,9 +207,24 @@ class Reservation(models.Model):
             ("reserved", "Reserved"),
             ("packed", "Packed"),
             ("given", "Given"),
+            ("missed", "Missed"),
         ],
         default="reserved",
     )
+
+    auto_extended = models.BooleanField(default=False)
+
+    miss_reason = models.CharField(
+        max_length=20,
+        blank=True,
+        default="",
+        choices=[
+            ("lapsed", "Lapsed"),
+            ("no_replacement", "No replacement found"),
+        ],
+    )
+
+    missed_at = models.DateTimeField(null=True, blank=True)
 
     reserved_by = models.ForeignKey(
         User,

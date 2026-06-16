@@ -7,6 +7,7 @@ from .views import (
     reserve_item,
     edit_item,
     edit_reservation,
+    reassign_item,
     delete_item,
     add_item,
     add_item_confirm,
@@ -17,6 +18,7 @@ from .views import (
     get_next_code,
     volunteer_view,
     run_sheet_view,
+    missed_collections_view,
 )
 
 
@@ -37,6 +39,8 @@ urlpatterns = [
     path("item/<int:item_id>/edit/", edit_item, name="edit_item"),
     path("reserve/<int:item_id>/", reserve_item, name="reserve_item"),
     path("reservation/<int:reservation_id>/edit/", edit_reservation, name="edit_reservation"),
+    path("item/<int:item_id>/reassign/", reassign_item, name="reassign_item"),
+    path("missed/", missed_collections_view, name="missed_collections"),
     path("cancel/<int:item_id>/", cancel_reservation, name="cancel_reservation"),
     path("pack/<int:item_id>/", pack_item, name="pack_item"),
     path("collect/<int:item_id>/", collect_item, name="collect_item"),

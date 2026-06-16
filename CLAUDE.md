@@ -20,8 +20,8 @@ Built and maintained by a solo volunteer. Keep solutions simple — no over-engi
 - Two roles: **Admin** (Django group named exactly `"Admin"`) and **Volunteer** (any authenticated non-admin user)
 - Permission check: `is_admin(user)` in `views.py` — checks `user.groups.filter(name="Admin")`
 - Always pass `is_admin` to templates via `add_role_context(request, context)`
-- Volunteers: reserve items, cancel/edit their own reservations, mark items collected
-- Admins: everything, including pack/unpack, add/edit/delete items, run sheet
+- Volunteers: reserve items, cancel/edit their own reservations, mark items collected, re-assign
+- Admins: everything, including pack/unpack, add/edit/delete items, run sheet, missed collections
 
 ## Item workflow
 `available` → `reserved` → `packed` → `given` (displayed as "Collected")
@@ -55,6 +55,80 @@ Inventory list also shows messages. Other pages do not — don't assume messages
 - Bootstrap loaded from CDN on every page (not collected static)
 - Favicon: `{% static 'favicon.ico' %}` — Under One Sky branded
 - Logo: `{% static 'logo.png' %}` — transparent background PNG
+
+## Reservation lapse system
+
+**Management command:** `inventory/management/commands/process_lapses.py`
+Run daily via cron: `python manage.py process_lapses`
+
+**Two-pass logic (runs in order):**
+
+Pass 1 — second miss (release to stock):
+- Finds reservations where `auto_extended=True` and `reserved_for_date < today`
+- Sets reservation `status="missed"`, `miss_reason="lapsed"`, `missed_at=now()`
+- Releases item back to `status="available"`
+- Uses `QuerySet.update()` throughout — never `reservation.save()` or `reservation.delete()`
+
+Pass 2 — first miss (extend by 7 days):
+- Finds reservations where `auto_extended=False` and `reserved_for_date < today` and status in `["reserved","packed"]`
+- Pushes `reserved_for_date` forward 7 days, sets `auto_extended=True`, appends note
+- Also uses `QuerySet.update()` to bypass `Reservation.save()` cascade
+
+**Why `QuerySet.update()` not `save()`:**
+`Reservation.save()` calls `full_clean()` and cascades status to `Item`. For lapse logic we need to bypass both — we handle item status ourselves, and "missed" is not a valid `clean()` state transition from "reserved".
+
+**Why `QuerySet.delete()` not `model.delete()` in re-assign:**
+`Reservation.model.delete()` sets `item.status = "available"` via signal/override. When re-assigning to a found replacement, we want `item.status = "given"`, so use `Reservation.objects.filter(pk=...).delete()` to bypass the cascade.
+
+**Reservation model fields added for lapse:**
+```python
+auto_extended = models.BooleanField(default=False)
+miss_reason = models.CharField(max_length=20, blank=True, default="",
+    choices=[("lapsed","Lapsed"),("no_replacement","No replacement found")])
+missed_at = models.DateTimeField(null=True, blank=True)
+# status choices also include ("missed", "Missed")
+```
+
+**Clock icon:** `bi-clock-history` in orange (`#e67e22`) shown in inventory list and view_item when `reservation.auto_extended` is True.
+
+## Re-assign feature
+
+Volunteers and admins can re-assign a reservation when the item is given to a different person.
+
+If a replacement item exists (same category, gender, size, status=available):
+- Delete original reservation via `Reservation.objects.filter(pk=...).delete()` (bypasses cascade)
+- Set `item.status = "given"`, `item.given_by = request.user`, `item.save()`
+- Create new `Reservation` on the replacement item (same person, date, route, notes)
+
+If no replacement available:
+- `Reservation.objects.filter(pk=...).update(status="missed", miss_reason="no_replacement", missed_at=now())`
+- Set `item.status = "given"`, `item.save()`
+
+The `view_item` context pre-computes `replacement_available` (True/False) so the modal text is context-aware before the user submits.
+
+## Missed collections
+
+`/inventory/missed/` — admin-only, paginated (10/page), ordered by `-missed_at`.
+
+Stores reservations with `status="missed"`. Two reasons:
+- `"lapsed"` — two consecutive missed collections (via `process_lapses`)
+- `"no_replacement"` — given to someone else but no matching stock found (via `reassign_item`)
+
+Missed reservations stay linked to their original item in the DB. New reservations can be created for the same item without conflict — `Reservation.clean()` only checks `status="reserved"`.
+
+## Test setup scripts
+
+**`seed_categories.py`** — run once (or re-run safely, uses `get_or_create`):
+```bash
+python manage.py shell < seed_categories.py
+```
+Creates 16 categories with 2-char codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and 7 routes with exact brand colours.
+
+**`seed_data.py`** — wipes items and reservations only (preserves users, categories, routes, sizes):
+```bash
+python manage.py shell < seed_data.py
+```
+Creates 50 items: ~88% available, ~8% reserved, ~2% packed, ~2% collected.
 
 ## Coding conventions
 - No comments unless the WHY is non-obvious

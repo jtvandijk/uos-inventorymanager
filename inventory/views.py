@@ -81,7 +81,9 @@ def inventory_view(request):
     search = request.GET.get("search")
     sort = request.GET.get("sort", "code")
 
-    if status:
+    if status == "pending":
+        items = items.filter(status__in=["reserved", "packed"])
+    elif status:
         items = items.filter(status=status)
     else:
         items = items.exclude(status="given")
@@ -139,10 +141,20 @@ def view_item(request, item_id):
 
     next_url = request.GET.get("next", "/inventory/")
 
+    replacement_available = False
+    if reservation:
+        replacement_available = Item.objects.filter(
+            category=item.category,
+            gender=item.gender,
+            size=item.size,
+            status="available",
+        ).exclude(id=item.id).exists()
+
     context = {
         "item": item,
         "reservation": reservation,
-        "next": next_url,  
+        "replacement_available": replacement_available,
+        "next": next_url,
     }
 
     return render(
@@ -345,6 +357,102 @@ def add_item_confirm(request):
         "inventory/add_item_confirm.html",
         add_role_context(request, context),
     )
+
+
+@login_required
+def reassign_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    next_url = request.GET.get("next") or "/inventory/"
+
+    reservation = Reservation.objects.filter(
+        item=item,
+        status__in=["reserved", "packed"],
+    ).select_related("route").first()
+
+    if not reservation:
+        return redirect(next_url)
+
+    replacement = Item.objects.filter(
+        category=item.category,
+        gender=item.gender,
+        size=item.size,
+        status="available",
+    ).exclude(id=item.id).first()
+
+    person = reservation.person
+    original_date = reservation.reserved_for_date
+
+    if replacement:
+        reassign_note = f"Re-assigned from {item.code} on {timezone.now().date()}."
+        new_notes = (reservation.notes + "\n" + reassign_note) if reservation.notes else reassign_note
+
+        new_res = Reservation(
+            item=replacement,
+            person=reservation.person,
+            reserved_for_date=reservation.reserved_for_date,
+            route=reservation.route,
+            notes=new_notes,
+            reserved_by=reservation.reserved_by,
+        )
+        new_res.save()
+
+        # Bypass model.delete() cascade (would set item→available); we want item→given
+        Reservation.objects.filter(pk=reservation.pk).delete()
+
+        item.status = "given"
+        item.given_by = request.user
+        item.given_at = timezone.now()
+        item.updated_at = timezone.now()
+        item.save()
+
+        messages.success(
+            request,
+            f"Re-assigned to {replacement.code}. {person}'s reservation moved with collection date {original_date}.",
+        )
+        from django.urls import reverse
+        return redirect(f"{reverse('view_item', args=[replacement.id])}?next={next_url}")
+
+    else:
+        miss_note = f"No replacement available on {timezone.now().date()} — item given to another person."
+        reservation.notes = (reservation.notes + "\n" + miss_note) if reservation.notes else miss_note
+        reservation.status = "missed"
+        reservation.miss_reason = "no_replacement"
+        reservation.missed_at = timezone.now()
+        # Use QuerySet.update() to avoid the cascade in Reservation.save()
+        Reservation.objects.filter(pk=reservation.pk).update(
+            status="missed",
+            miss_reason="no_replacement",
+            missed_at=timezone.now(),
+            notes=reservation.notes,
+        )
+
+        item.status = "given"
+        item.given_by = request.user
+        item.given_at = timezone.now()
+        item.updated_at = timezone.now()
+        item.save()
+
+        messages.warning(
+            request,
+            f"No matching item in stock. {person}'s reservation has been recorded as missed.",
+        )
+        return redirect(next_url)
+
+
+@login_required
+def missed_collections_view(request):
+    if not is_admin(request.user):
+        return redirect("volunteer")
+
+    missed_qs = Reservation.objects.filter(
+        status="missed",
+    ).select_related("item", "item__category", "route").order_by("-missed_at", "-reserved_for_date")
+
+    paginator = Paginator(missed_qs, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    context = {"page_obj": page_obj}
+    return render(request, "inventory/missed_collections.html", add_role_context(request, context))
 
 
 @user_passes_test(is_admin)
