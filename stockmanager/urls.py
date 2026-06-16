@@ -9,6 +9,7 @@ urlpatterns = [
     path('', lambda request: redirect('/inventory/')),
     path('admin/', admin.site.urls),
     path('inventory/', include('inventory.urls')),
+    path('resources/', include('resources.urls')),
     path(
         'login/',
         auth_views.LoginView.as_view(

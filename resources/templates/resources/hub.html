@@ -1,0 +1,1189 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Resource Hub - Under One Sky</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Volunteer Resource Hub for Under One Sky — guidelines, policies, and practical information for Skywalkers and Team Leaders.">
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root { --uos-blue: #569EEB; --uos-blue-dark: #3a7bc8; }
+        body { font-size: 0.95rem; }
+
+        /* Header */
+        .uos-header { background-color: var(--uos-blue); }
+
+        /* Tab nav */
+        .tab-nav-wrap { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        .tab-nav-wrap::-webkit-scrollbar { height: 3px; }
+        .tab-nav-wrap::-webkit-scrollbar-thumb { background: #c0d6f5; }
+        .nav-pills .nav-link { color: #444; border-radius: 6px; padding: 0.45rem 1rem; font-size: 0.9rem; }
+        .nav-pills .nav-link.active { background-color: var(--uos-blue); color: #fff; }
+        .nav-pills .nav-link:not(.active):hover { background-color: #eef4fd; }
+
+        /* Section cards */
+        .section-card { border: none; border-radius: 0.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 1.25rem; overflow: hidden; }
+        .section-card > .card-header { padding: 0.75rem 1.25rem; }
+        .section-header { font-size: 0.95rem; font-weight: 600; }
+
+        /* Accordions */
+        .accordion-button:not(.collapsed) { background-color: #eef4fd; color: var(--uos-blue-dark); box-shadow: none; }
+        .accordion-button:focus { box-shadow: none; }
+
+        /* Misc */
+        .tag { display: inline-block; font-size: 0.75rem; background: #e9ecef; color: #495057; border-radius: 4px; padding: 1px 6px; margin: 1px 2px; }
+        .service-card { border: 1px solid #dee2e6; border-radius: 0.4rem; padding: 1rem; height: 100%; }
+        .highlight-box { background: #f8f9fa; border-left: 3px solid var(--uos-blue); padding: 0.75rem 1rem; border-radius: 0 4px 4px 0; margin: 0.5rem 0; }
+        .emergency-number { font-size: 2rem; font-weight: 700; color: #dc3545; }
+        @media (max-width: 576px) { .emergency-number { font-size: 1.5rem; } }
+    </style>
+</head>
+<body class="bg-light">
+
+<!-- ===== HEADER ===== -->
+<div class="uos-header text-white py-3">
+    <div class="container">
+        <div class="d-flex align-items-center gap-3">
+            <img src="{% static 'logo.png' %}" alt="Under One Sky" style="height: 38px; filter: brightness(0) invert(1);">
+            <div>
+                <div class="fw-bold fs-5 lh-1">Under One Sky</div>
+                <small class="opacity-75">Volunteer Resource Hub</small>
+            </div>
+            <div class="ms-auto d-flex gap-2">
+                {% if user.is_authenticated %}
+                <a href="/inventory/volunteer/" class="btn btn-outline-light btn-sm">Volunteer App</a>
+                {% endif %}
+                <a href="https://underoneskytogether.com" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-globe me-1"></i>Website
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TAB NAV ===== -->
+<div class="bg-white border-bottom shadow-sm sticky-top">
+    <div class="container">
+        <div class="tab-nav-wrap py-2">
+            <ul class="nav nav-pills flex-nowrap gap-1" id="hubTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-walk-btn" data-bs-toggle="pill" data-bs-target="#tab-walk" type="button" role="tab">
+                        <i class="bi bi-person-walking me-1"></i>On the Walk
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-prep-btn" data-bs-toggle="pill" data-bs-target="#tab-prep" type="button" role="tab">
+                        <i class="bi bi-basket me-1"></i>Preparation
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-pol-btn" data-bs-toggle="pill" data-bs-target="#tab-pol" type="button" role="tab">
+                        <i class="bi bi-clipboard-check me-1"></i>Policies
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-ref-btn" data-bs-toggle="pill" data-bs-target="#tab-ref" type="button" role="tab">
+                        <i class="bi bi-compass me-1"></i>Reference
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TAB CONTENT ===== -->
+<div class="container py-4">
+<div class="tab-content">
+
+    <!-- ============================================================ -->
+    <!-- TAB 1: ON THE WALK                                           -->
+    <!-- ============================================================ -->
+    <div class="tab-pane fade show active" id="tab-walk" role="tabpanel">
+
+        <!-- Volunteer Guide -->
+        <div class="section-card card">
+            <div class="card-header bg-primary">
+                <h5 class="section-header text-white mb-0"><i class="bi bi-people-fill me-2"></i>Volunteer Guide</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-vol">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#vol-1">
+                                What is a Skywalk?
+                            </button>
+                        </h2>
+                        <div id="vol-1" class="accordion-collapse collapse show" data-bs-parent="#acc-vol">
+                            <div class="accordion-body">
+                                <p>A Skywalk is an outreach event where Under One Sky teams walk the streets to connect with homeless friends, providing essentials like food, water, hot drinks, clothing, practical help, and companionship. Each event is led by an experienced Team Leader and focuses on building trust and friendship.</p>
+                                <ul class="mb-0">
+                                    <li>Individual Skywalks can serve anywhere between <strong>20 and 100 people</strong></li>
+                                    <li>Each group consists of up to <strong>5–6 volunteers</strong> plus a Team Leader</li>
+                                    <li>We distribute sandwiches, soup, crisps, sweets, water, hot drinks, underwear, socks, clothing, toiletries, and SIM cards when available</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#vol-2">
+                                How to Prepare
+                            </button>
+                        </h2>
+                        <div id="vol-2" class="accordion-collapse collapse" data-bs-parent="#acc-vol">
+                            <div class="accordion-body">
+                                <p>Check in with yourself before joining a Skywalk. While it's rewarding, it can also be draining, especially if you're unwell or emotionally exhausted. The first walk can be particularly emotional, so give yourself space to process your feelings. If you're not in the right headspace, it's okay to take a break — supporting others starts with taking care of yourself.</p>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <h6><i class="bi bi-sun text-warning me-1"></i> Summer</h6>
+                                        <ul class="mb-0">
+                                            <li>Water bottle, sports drinks, high-energy snacks</li>
+                                            <li>Sunscreen, hat, sunglasses</li>
+                                            <li>Rain poncho (umbrellas are not ideal in crowds)</li>
+                                            <li>Comfortable walking shoes</li>
+                                            <li>Antibacterial hand gel</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <h6><i class="bi bi-snow text-info me-1"></i> Winter</h6>
+                                        <ul class="mb-0">
+                                            <li>Thermos with hot drinks, insulated water bottle</li>
+                                            <li>High-energy snacks</li>
+                                            <li>Extra warm layers, waterproof gloves</li>
+                                            <li>Waterproof winter walking boots</li>
+                                            <li>Rain poncho</li>
+                                            <li>Antibacterial hand gel</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#vol-3">
+                                Interacting with Our Homeless Friends
+                            </button>
+                        </h2>
+                        <div id="vol-3" class="accordion-collapse collapse" data-bs-parent="#acc-vol">
+                            <div class="accordion-body">
+                                <p>Volunteering with homeless friends is safe as long as you follow basic precautions and work in a team. Most of our friends are kind and grateful.</p>
+                                <ul>
+                                    <li>Treat everyone with respect — use their name if shared, and speak as equals</li>
+                                    <li>Listen with empathy and let them lead the conversation</li>
+                                    <li>Offer help, but don't force it — some may not want to engage</li>
+                                    <li>Respect their space; greet gently — <em>"Would you like a hot drink or a snack?"</em></li>
+                                    <li>If they don't respond, don't push — let them know you're here</li>
+                                    <li>For sensitive topics: listen, acknowledge feelings, and refer to a service if appropriate</li>
+                                </ul>
+                                <div class="alert alert-warning mb-0">
+                                    <strong><i class="bi bi-camera-video-off me-1"></i> Photography:</strong> Do not photograph homeless friends without explicit consent. Consider photographing volunteers, supplies, or general scenes instead.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#vol-4">
+                                Key Boundaries
+                            </button>
+                        </h2>
+                        <div id="vol-4" class="accordion-collapse collapse" data-bs-parent="#acc-vol">
+                            <div class="accordion-body">
+                                <ul class="mb-0">
+                                    <li>Keep personal details private — do not share your name, phone number, address, or social media</li>
+                                    <li>Do not make promises you can't keep</li>
+                                    <li>Do not give money or personal gifts — private donations must never be handed out by volunteers</li>
+                                    <li>If a follow-up is needed, obtain the person's contact details and pass to the Team Leader</li>
+                                    <li>Seek support from your Team Leader if a situation feels unsafe — stepping away is always a valid choice</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#vol-5">
+                                Handling Difficult Situations
+                            </button>
+                        </h2>
+                        <div id="vol-5" class="accordion-collapse collapse" data-bs-parent="#acc-vol">
+                            <div class="accordion-body">
+                                <h6>If someone becomes upset or angry</h6>
+                                <ul>
+                                    <li>Stay calm and listen actively</li>
+                                    <li>Acknowledge their feelings without escalating the situation</li>
+                                    <li>If it feels unsafe, step back and seek help from your Team Leader</li>
+                                </ul>
+
+                                <h6 class="mt-3">If someone requires urgent assistance</h6>
+                                <ul class="mb-0">
+                                    <li>Stay calm and assess the level of urgency</li>
+                                    <li>Do not provide medical assistance unless trained</li>
+                                    <li>Call 999 if necessary</li>
+                                    <li>Stay with the person (if safe) until help arrives</li>
+                                    <li>Notify your Team Leader — they will complete an Incident Form</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#vol-6">
+                                How to Sign Up
+                            </button>
+                        </h2>
+                        <div id="vol-6" class="accordion-collapse collapse" data-bs-parent="#acc-vol">
+                            <div class="accordion-body">
+                                <ul class="mb-0">
+                                    <li>Respond to Mikkel's broadcast message</li>
+                                    <li>Reply to the shout-out in your relevant WhatsApp group</li>
+                                    <li>To join a different route, text Mikkel to be added to that WhatsApp group</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Leader Guide -->
+        <div class="section-card card">
+            <div class="card-header bg-dark">
+                <h5 class="section-header text-white mb-0"><i class="bi bi-star-fill me-2"></i>Team Leader Guide</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-tl">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#tl-1">
+                                The Skywalk Code
+                            </button>
+                        </h2>
+                        <div id="tl-1" class="accordion-collapse collapse show" data-bs-parent="#acc-tl">
+                            <div class="accordion-body">
+                                <p class="text-muted small mb-3">Read this to the team at the start of every Skywalk.</p>
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-6"><div class="highlight-box"><strong>Team</strong><br><small>We leave as one and return as one. We respect and protect each other.</small></div></div>
+                                    <div class="col-12 col-md-6"><div class="highlight-box"><strong>Boundaries</strong><br><small>I make my boundaries clear. My team helps me enforce them.</small></div></div>
+                                    <div class="col-12 col-md-6"><div class="highlight-box"><strong>Compassion</strong><br><small>We are a safe space and always see the human being first.</small></div></div>
+                                    <div class="col-12 col-md-6"><div class="highlight-box"><strong>Dignity</strong><br><small>We make people feel seen, heard, valued and take action when needed.</small></div></div>
+                                    <div class="col-12 col-md-6"><div class="highlight-box"><strong>Integrity</strong><br><small>I treat my team and our friends as I would like to be treated.</small></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tl-2">
+                                Pre-Walk Checklist
+                            </button>
+                        </h2>
+                        <div id="tl-2" class="accordion-collapse collapse" data-bs-parent="#acc-tl">
+                            <div class="accordion-body">
+                                <ul class="mb-0">
+                                    <li>Brief first-time Skywalkers on how we operate — values, practical process, and photography approval</li>
+                                    <li>Ensure supplies are readied and packed in the trolleys</li>
+                                    <li>Monitor the WhatsApp group for late arrivals or urgent updates</li>
+                                    <li>Introduce all team members by name</li>
+                                    <li>Read out the Skywalk Code</li>
+                                    <li>Make clear that any volunteer can stay in the background if uncomfortable serving a specific person</li>
+                                    <li>Inform the team of anyone on the "tracked list" who has exhibited inappropriate behaviour</li>
+                                    <li><strong>Check-in score:</strong> ask each team member how they feel 1–5 (low to high). If anyone scores 1, have a private conversation before proceeding</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tl-3">
+                                During the Walk
+                            </button>
+                        </h2>
+                        <div id="tl-3" class="accordion-collapse collapse" data-bs-parent="#acc-tl">
+                            <div class="accordion-body">
+                                <ul class="mb-0">
+                                    <li>Keep the group together and maintain a duty of care at all times</li>
+                                    <li>Communicate with all team members so everyone feels included</li>
+                                    <li>Pre-warn the team before approaching anyone on the watch list</li>
+                                    <li>Keep count of how many people you connected with and served</li>
+                                    <li>Ensure special requests are logged using the Special Requests form</li>
+                                    <li>Stay vigilant of your surroundings</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tl-4">
+                                After the Walk
+                            </button>
+                        </h2>
+                        <div id="tl-4" class="accordion-collapse collapse" data-bs-parent="#acc-tl">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li><strong>Check-out score:</strong> repeat the 1–5 score with the team and note results</li>
+                                    <li>Check if anyone would like to raise something from the walk</li>
+                                    <li>Pack up all leftover supplies and return to storage (no food should be left accessible to vermin)</li>
+                                    <li>Submit the Skywalk Report form</li>
+                                    <li>Report any incidents within 24 hours via the Incident Form</li>
+                                    <li>Write a short summary and share in the WhatsApp group</li>
+                                </ul>
+                                <h6>Cash donations</h6>
+                                <p class="mb-0">Put cash in the donation tin in the Team Leader backpack and log it in the Skywalk report. If the tin is unavailable, transfer the amount to the crowdfunding campaign and add Gift Aid for donations of £30 or less.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tl-5">
+                                Trolley Setup
+                            </button>
+                        </h2>
+                        <div id="tl-5" class="accordion-collapse collapse" data-bs-parent="#acc-tl">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <h6><i class="bi bi-cup-hot me-1"></i>Food &amp; Drinks</h6>
+                                        <ul class="mb-0">
+                                            <li>Two types of sandwiches (e.g. ham and cheese)</li>
+                                            <li>Other food items (where applicable)</li>
+                                            <li>Crisps, Cup-a-Soup, sweets or flapjacks</li>
+                                            <li>Coffee sachets, tea, hot chocolate powder</li>
+                                            <li>Milk sachets or fresh milk, sugar sachets</li>
+                                            <li>Flasks with hot water, bottled water</li>
+                                            <li>Paper cups, coffee stirrers, wooden spoons/forks</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <h6><i class="bi bi-bag me-1"></i>Clothing &amp; Hygiene</h6>
+                                        <ul class="mb-0">
+                                            <li>Underwear (various sizes)</li>
+                                            <li>Socks</li>
+                                            <li>Other clothing items</li>
+                                            <li>Hygiene products (wipes, toothbrushes, toothpaste, tampons, etc.)</li>
+                                            <li>SIM cards</li>
+                                            <li>Plastic bags</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0 small">
+                                    <strong>Note for those with diabetes:</strong> Avoid processed snacks, white bread, sugary spreads, and excessive fruit juice. Offer whole grain alternatives where possible.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tl-6">
+                                Handling Donations from the Public
+                            </button>
+                        </h2>
+                        <div id="tl-6" class="accordion-collapse collapse" data-bs-parent="#acc-tl">
+                            <div class="accordion-body">
+                                <p>If a member of the public wants to donate, offer two options:</p>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <div class="service-card">
+                                            <h6><i class="bi bi-qr-code me-1"></i>Online</h6>
+                                            <p class="mb-0 small">The UOS business cards in the Team Leader folder have a QR code linked to the crowdfunding campaign.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="service-card">
+                                            <h6><i class="bi bi-cash-coin me-1"></i>Cash</h6>
+                                            <p class="mb-0 small">Place in the donation tin in the Team Leader backpack. Log it in the Skywalk report. Add Gift Aid for donations of £30 or less if transferring online.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#tl-7">
+                                Boundary Setting &amp; Difficult Interactions
+                            </button>
+                        </h2>
+                        <div id="tl-7" class="accordion-collapse collapse" data-bs-parent="#acc-tl">
+                            <div class="accordion-body">
+                                <p>Unpleasant interactions often stem from trauma or learned behaviours. Approach them with both firmness and empathy. <strong>Healthy boundaries are not the opposite of compassion — they create mutual respect.</strong></p>
+                                <h6 class="mt-3">Before the walk</h6>
+                                <ul>
+                                    <li>Maintain a tracked list of individuals who have exhibited inappropriate behaviour and share it with the team</li>
+                                    <li>Remind volunteers about personal boundaries — comfort zones vary and each person decides their own</li>
+                                    <li>Normalise conversations about discomfort; use check-out discussions to surface any issues</li>
+                                </ul>
+                                <h6 class="mt-3">During a difficult interaction</h6>
+                                <ul class="mb-0">
+                                    <li>Volunteers may choose not to engage with anyone on the tracked list</li>
+                                    <li>If behaviour is inappropriate, let the individual know it has made team members uncomfortable</li>
+                                    <li>If it persists, explain that continued service may not be possible</li>
+                                    <li>For untracked individuals, volunteers should feel empowered to step away without hesitation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Homeless Friend Support -->
+        <div class="section-card card">
+            <div class="card-header bg-danger">
+                <h5 class="section-header text-white mb-0"><i class="bi bi-shield-heart-fill me-2"></i>Homeless Friend Support</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-hf">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#hf-1">
+                                Emergency Support
+                            </button>
+                        </h2>
+                        <div id="hf-1" class="accordion-collapse collapse show" data-bs-parent="#acc-hf">
+                            <div class="accordion-body">
+                                <p>Where a homeless friend's wellbeing is at imminent and severe risk, the usual course of action is to arrange an emergency night in a hostel. Past examples include underage individuals, visibly pregnant women, people discharged prematurely from hospital, and people at risk of hypothermia.</p>
+                                <p>The key judgement call is whether a hostel stay or calling emergency services is the right course of action.</p>
+                                <div class="alert alert-danger mb-0">
+                                    For a second opinion or where a hostel booking is required, call <strong>Brian Whiting</strong> or <strong>Mikkel Juel Iversen</strong> on <strong>07950 366 448</strong>.<br>
+                                    <strong>Always list the situation in the Team Leader report.</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#hf-2">
+                                Helping Someone Off the Street
+                            </button>
+                        </h2>
+                        <div id="hf-2" class="accordion-collapse collapse" data-bs-parent="#acc-hf">
+                            <div class="accordion-body">
+                                <p>Where a homeless friend has a wish and an opportunity for immediate change, we will attempt to provide support. Past examples include people who have managed to get into work but have not yet received their first pay cheque, people who have just become homeless, and people who have an opportunity to be housed by family or friends (in the UK or abroad).</p>
+                                <p>Our action may be an offer of temporary hostel accommodation or sponsorship of travel.</p>
+                                <div class="alert alert-warning mb-0">
+                                    The Team Leader should raise the situation with <strong>Brian</strong>, who will call or meet the person to understand the circumstances.<br>
+                                    <strong>Always list the situation in the Team Leader report.</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-walk -->
+
+    <!-- ============================================================ -->
+    <!-- TAB 2: PREPARATION                                           -->
+    <!-- ============================================================ -->
+    <div class="tab-pane fade" id="tab-prep" role="tabpanel">
+
+        <div class="section-card card">
+            <div class="card-header bg-warning">
+                <h5 class="section-header text-dark mb-0"><i class="bi bi-basket-fill me-2"></i>Sandwich Making</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-sw">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#sw-1">
+                                Responsibilities &amp; Supplies
+                            </button>
+                        </h2>
+                        <div id="sw-1" class="accordion-collapse collapse show" data-bs-parent="#acc-sw">
+                            <div class="accordion-body">
+                                <ul>
+                                    <li>Volunteers and staff are responsible for sandwich preparation</li>
+                                    <li>Event Coordinators oversee quality and quantity</li>
+                                    <li>Sandwiches should be prepared and delivered to designated locations as per the Skywalk route. Deliveries can be arranged via Uber or by volunteers directly</li>
+                                    <li>Any delays or issues must be communicated promptly</li>
+                                </ul>
+                                <h6>Supplies needed</h6>
+                                <p><strong>Ingredients:</strong> Bread (white, 50/50, whole-grain, or wholemeal), spreads (butter or margarine), fillings (ham, turkey, beef, egg mayo, cheese, etc.), and optional toppings.</p>
+                                <p><strong>Wrapping:</strong> Wax paper, parchment paper, plastic wrap, aluminium foil, or cling film.</p>
+                                <p class="mb-0"><strong>Labelling:</strong> Waterproof markers or labels for clear identification.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sw-2">
+                                Assembly, Cutting &amp; Wrapping
+                            </button>
+                        </h2>
+                        <div id="sw-2" class="accordion-collapse collapse" data-bs-parent="#acc-sw">
+                            <div class="accordion-body">
+                                <h6>Assembly</h6>
+                                <ol>
+                                    <li>Spread butter or margarine on one side of each bread slice</li>
+                                    <li>Add fillings (cheese, ham, turkey, beef, egg mayo, or alternatives)</li>
+                                    <li>Add optional toppings like pickles, tomatoes, or lettuce</li>
+                                </ol>
+                                <h6 class="mt-3">Cutting</h6>
+                                <p>Cut sandwiches into <strong>two identical rectangles</strong> — not triangles. This gives equal portions, better stability, and easier wrapping and transportation.</p>
+                                <h6 class="mt-3">Wrapping</h6>
+                                <p class="mb-1"><strong>Wax paper / plastic wrap:</strong> Fold sides over sandwich, fold the bottom edge up, secure with tape or sticker.</p>
+                                <p class="mb-0"><strong>Aluminium foil / cling film:</strong> Fold sides over, then roll from the bottom up ensuring it's tightly wrapped.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sw-3">
+                                Labelling &amp; Bagging
+                            </button>
+                        </h2>
+                        <div id="sw-3" class="accordion-collapse collapse" data-bs-parent="#acc-sw">
+                            <div class="accordion-body">
+                                <ol>
+                                    <li>Organise sandwiches into bags by filling type (e.g. "Cheese", "Ham", "Vegan")</li>
+                                    <li>Label clearly — filling type, dietary notes (e.g. "Vegan", "Gluten-Free"), and quantity. Use waterproof markers so labels stay legible in wet conditions</li>
+                                    <li>Include a note with the total count and any special instructions</li>
+                                    <li>Double-check contents before sealing</li>
+                                </ol>
+                                <div class="alert alert-info mb-0 small">
+                                    Clear labelling is especially important in winter when reduced daylight makes visibility more challenging.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sw-4">
+                                Dietary Preferences &amp; Allergens
+                            </button>
+                        </h2>
+                        <div id="sw-4" class="accordion-collapse collapse" data-bs-parent="#acc-sw">
+                            <div class="accordion-body">
+                                <p>We always aim to include vegan options. Ensure ingredients are certified or clearly labelled as suitable for vegans.</p>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-12 col-md-6">
+                                        <h6 class="small fw-bold">Vegan ingredients</h6>
+                                        <ul class="mb-0 small">
+                                            <li>Jam (check for vegan suitability)</li>
+                                            <li>Peanut butter (check for vegan suitability)</li>
+                                            <li>Vegan cheese alternatives</li>
+                                            <li>Tomatoes, cucumber, avocado, hummus</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <h6 class="small fw-bold">Classic vegan combinations</h6>
+                                        <ul class="mb-0 small">
+                                            <li>Hummus, cucumber, carrot, spinach, bell pepper on wholegrain</li>
+                                            <li>Mashed avocado and tomato</li>
+                                            <li>Peanut butter and banana on wholemeal</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <p><strong>Common allergens:</strong> <span class="tag">Nuts</span> <span class="tag">Dairy</span> <span class="tag">Eggs</span> <span class="tag">Gluten</span> <span class="tag">Fish &amp; shellfish</span> <span class="tag">Soy</span> <span class="tag">Sesame</span></p>
+                                <h6>Preventing cross-contamination</h6>
+                                <ul class="mb-0">
+                                    <li>Wash hands before and during preparation</li>
+                                    <li>Use separate utensils for each filling type</li>
+                                    <li>Clean surfaces between different fillings</li>
+                                    <li>Store ingredients in clearly labelled, separate containers</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sw-5">
+                                Food Hygiene
+                            </button>
+                        </h2>
+                        <div id="sw-5" class="accordion-collapse collapse" data-bs-parent="#acc-sw">
+                            <div class="accordion-body">
+                                <h6>Personal hygiene</h6>
+                                <ul>
+                                    <li>Wear suitable, clean, protective clothing</li>
+                                    <li>Keep hair tied back and wear a head covering (hat or hair net)</li>
+                                    <li>Do not wear watches or jewellery (except a plain wedding band)</li>
+                                    <li>Do not touch your face or hair, smoke, spit, sneeze, eat, or chew gum while handling food</li>
+                                </ul>
+                                <h6 class="mt-3">Handwashing</h6>
+                                <p>Wash hands thoroughly before preparing food; after touching raw food; after handling waste or emptying a bin; after cleaning; after blowing your nose; after touching phones, switches, or door handles. Dry with a disposable towel.</p>
+                                <div class="alert alert-danger mb-0">
+                                    <strong>Do NOT handle food if you</strong> are ill with a disease likely to be transmitted through food, have infected wounds or sores, or have diarrhoea.
+                                    <br><small class="text-muted">Source: Food Standards Agency</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-prep -->
+
+    <!-- ============================================================ -->
+    <!-- TAB 3: POLICIES                                              -->
+    <!-- ============================================================ -->
+    <div class="tab-pane fade" id="tab-pol" role="tabpanel">
+
+        <!-- Code of Conduct -->
+        <div class="section-card card">
+            <div class="card-header bg-secondary">
+                <h5 class="section-header text-white mb-0"><i class="bi bi-clipboard-check-fill me-2"></i>Code of Conduct</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-coc">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#coc-1">
+                                Overview
+                            </button>
+                        </h2>
+                        <div id="coc-1" class="accordion-collapse collapse show" data-bs-parent="#acc-coc">
+                            <div class="accordion-body">
+                                <p>The UOS Code of Conduct ensures everyone understands the standard of behaviour required. Volunteers commit to reading and agreeing to this Code and the Safeguarding Policy before signing up.</p>
+                                <p class="mb-0">As a volunteer you commit to acting in the best interests of the team in order to collectively act in a safe, effective, and efficient manner.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coc-2">
+                                Be Responsible
+                            </button>
+                        </h2>
+                        <div id="coc-2" class="accordion-collapse collapse" data-bs-parent="#acc-coc">
+                            <div class="accordion-body">
+                                <ul class="mb-0">
+                                    <li>Carry out duties responsibly, safely, and competently without being judgemental or biased</li>
+                                    <li>Avoid providing inaccurate information — inform the Team Leader to follow up with professional advice if needed</li>
+                                    <li>Handle UOS resources conscientiously; supplies are for homeless friends, not team members</li>
+                                    <li>Report any issues or concerns to your Team Leader, who will complete an Incident Report and escalate as appropriate</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coc-3">
+                                Be Respectful
+                            </button>
+                        </h2>
+                        <div id="coc-3" class="accordion-collapse collapse" data-bs-parent="#acc-coc">
+                            <div class="accordion-body">
+                                <ul class="mb-0">
+                                    <li>Respect people experiencing homelessness as individuals, regardless of their economic status, abilities, race, customs, culture, or religion</li>
+                                    <li>Treat all homeless friends equally with regards to communication and access to supplies</li>
+                                    <li>Be aware of the impact your actions may have on the environment and people around you</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coc-4">
+                                Be Discerning
+                            </button>
+                        </h2>
+                        <div id="coc-4" class="accordion-collapse collapse" data-bs-parent="#acc-coc">
+                            <div class="accordion-body">
+                                <ul class="mb-0">
+                                    <li>Behave in a manner that does not bring UOS into disrepute</li>
+                                    <li>Avoid actions that will bring harm to another person or property</li>
+                                    <li>Do not hand out private money donations while on UOS duty</li>
+                                    <li>Do not share personal details with homeless friends; pass any follow-up contact details to the Team Leader</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coc-5">
+                                Dos &amp; Don'ts
+                            </button>
+                        </h2>
+                        <div id="coc-5" class="accordion-collapse collapse" data-bs-parent="#acc-coc">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <h6 class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Do</h6>
+                                        <ul class="mb-0">
+                                            <li>Represent UOS and its values at all times</li>
+                                            <li>Follow health, safety, and safeguarding guidelines</li>
+                                            <li>Maintain confidentiality and respect privacy</li>
+                                            <li>Practise self-care and communicate any limitations to your Team Leader</li>
+                                            <li>Report anything of potential threat or harm to your Team Leader immediately</li>
+                                            <li>Be supportive of your teammates</li>
+                                            <li>Be punctual and alert the Team Leader if you are late or unable to join</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <h6 class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Don't</h6>
+                                        <ul class="mb-0">
+                                            <li>Proselytise (attempt to convert people to a religion)</li>
+                                            <li>Create dependency or overprotect homeless friends</li>
+                                            <li>Make empty promises or give material rewards without consulting the Team Leader</li>
+                                            <li>Bring or drink alcohol, or take drugs during volunteering</li>
+                                            <li>Verbally, emotionally, or physically abuse anyone</li>
+                                            <li>Upload photos of homeless friends to social media</li>
+                                            <li>Share information about homeless friends with anyone outside UOS</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="alert alert-secondary mt-3 mb-0 fst-italic small">
+                                    "When volunteering, please carry out the service with lots of <strong>love</strong> and <strong>compassion</strong>." — Always act in a way which upholds the reputation and values of Under One Sky.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#coc-6">
+                                Confidentiality &amp; Data Protection
+                            </button>
+                        </h2>
+                        <div id="coc-6" class="accordion-collapse collapse" data-bs-parent="#acc-coc">
+                            <div class="accordion-body">
+                                <p>All information about UOS — especially personal data of homeless friends — must not be disclosed or used for any purpose other than fulfilling your volunteering responsibilities.</p>
+                                <p>Photographs and videos are considered personal data. Consent must be sought and the intended use must be clearly explained. Avoid asking those who have already declined.</p>
+                                <p class="mb-0">All volunteers must comply with the General Data Protection Regulation (GDPR). If in doubt, consult your Team Leader.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Safeguarding -->
+        <div class="section-card card">
+            <div class="card-header" style="background-color: #6f1d1b;">
+                <h5 class="section-header text-white mb-0"><i class="bi bi-person-lock me-2"></i>Safeguarding Policy</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-sg">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#sg-1">
+                                Introduction
+                            </button>
+                        </h2>
+                        <div id="sg-1" class="accordion-collapse collapse show" data-bs-parent="#acc-sg">
+                            <div class="accordion-body">
+                                <p>Under One Sky is committed to ensuring that everyone who comes into contact with our organisation is safe and safeguarded. Safeguarding is everyone's responsibility and is embedded throughout our culture.</p>
+                                <p class="mb-0">This policy is not about creating barriers or bureaucracy. It is about being aware, compassionate, and responsive — knowing boundaries, escalating concerns appropriately, and ensuring accountability at all levels.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sg-2">
+                                Key Roles
+                            </button>
+                        </h2>
+                        <div id="sg-2" class="accordion-collapse collapse" data-bs-parent="#acc-sg">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <div class="service-card">
+                                            <div class="fw-semibold">Designated Safeguarding Lead (DSL)</div>
+                                            <div class="text-muted small">Mikkel Juel Iversen</div>
+                                            <p class="mb-0 mt-2 small">Main point of contact for concerns. Provides guidance and liaises with statutory agencies.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="service-card">
+                                            <div class="fw-semibold">Deputy DSL</div>
+                                            <div class="text-muted small">Julia Lalla-Maharajh</div>
+                                            <p class="mb-0 mt-2 small">Supports the DSL and acts in their absence.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="service-card">
+                                            <div class="fw-semibold">Safeguarding Trustee</div>
+                                            <div class="text-muted small">Sara Carnegie</div>
+                                            <p class="mb-0 mt-2 small">Board-level oversight, reviews complex cases.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="service-card">
+                                            <div class="fw-semibold">Volunteers</div>
+                                            <p class="mb-0 mt-2 small"><strong>Not expected to intervene or investigate</strong> — observe, listen, and escalate concerns to the DSL. Always act with dignity and follow the Code of Conduct.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sg-3">
+                                Reporting a Concern
+                            </button>
+                        </h2>
+                        <div id="sg-3" class="accordion-collapse collapse" data-bs-parent="#acc-sg">
+                            <div class="accordion-body">
+                                <p>All concerns must be taken seriously. Our response is guided by five principles:</p>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6 col-md-4"><div class="highlight-box small"><strong>Promptness</strong><br>Act without delay</div></div>
+                                    <div class="col-6 col-md-4"><div class="highlight-box small"><strong>Transparency</strong><br>Raise concerns openly</div></div>
+                                    <div class="col-6 col-md-4"><div class="highlight-box small"><strong>Respect</strong><br>Treat all with dignity</div></div>
+                                    <div class="col-6 col-md-4"><div class="highlight-box small"><strong>Proportionality</strong><br>Match response to risk</div></div>
+                                    <div class="col-6 col-md-4"><div class="highlight-box small"><strong>Accountability</strong><br>Record decisions clearly</div></div>
+                                </div>
+                                <p class="mb-0">Report concerns promptly to the DSL. If the concern is about the DSL, escalate to the Safeguarding Trustee. <strong>If in doubt, record the concern.</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sg-4">
+                                Children &amp; Young People
+                            </button>
+                        </h2>
+                        <div id="sg-4" class="accordion-collapse collapse" data-bs-parent="#acc-sg">
+                            <div class="accordion-body">
+                                <p>While UOS's focus is on adults, we may encounter children at risk during outreach. In such cases, escalate concerns immediately to safeguarding leads or statutory services.</p>
+                                <p>Young volunteers are welcome. All under-18s take part in age-appropriate activities only, with suitable supervision. Parental/guardian consent is required for under-16s.</p>
+                                <p class="mb-0">Place-based settings (such as The Lighthouse) are limited to adults aged 18 and over.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sg-5">
+                                Policy Version
+                            </button>
+                        </h2>
+                        <div id="sg-5" class="accordion-collapse collapse" data-bs-parent="#acc-sg">
+                            <div class="accordion-body">
+                                <p>This page summarises key points of the UOS Safeguarding Policy.</p>
+                                <p><strong>Version:</strong> 3.2 &nbsp;·&nbsp; <strong>Adopted:</strong> 21 April 2026 &nbsp;·&nbsp; <strong>Next review:</strong> Before 21 April 2027</p>
+                                <p class="mb-0">The full policy document is available to download from the UOS Resource Hub on the main website.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- About UOS -->
+        <div class="section-card card">
+            <div class="card-header" style="background-color: #569EEB;">
+                <h5 class="section-header text-white mb-0"><i class="bi bi-heart-fill me-2"></i>About Under One Sky</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-about">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#about-1">
+                                Our Story
+                            </button>
+                        </h2>
+                        <div id="about-1" class="accordion-collapse collapse show" data-bs-parent="#acc-about">
+                            <div class="accordion-body">
+                                <p>The idea for Under One Sky came from founder Mikkel Juel Iversen's personal experience of supporting two homeless friends for a year each. At Christmas 2012, Mikkel and colleague Yaqub Hussain invited friends to walk the streets of Central London — distributing Christmas presents and letting those affected by homelessness know they hadn't been forgotten. This became the unintentional birth of Under One Sky.</p>
+                                <p>From 2012 to 2019 the volunteer base grew from 8 to over 600 people. Covid-19 forced UOS from a winter pop-up to a 24/7 operation. During the height of the pandemic our teams supported 600 people daily, served our homeless friends 75,000 times in the first year, and the volunteer base grew to more than 1,000 people.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#about-2">
+                                Our Ethos &amp; Values
+                            </button>
+                        </h2>
+                        <div id="about-2" class="accordion-collapse collapse" data-bs-parent="#acc-about">
+                            <div class="accordion-body">
+                                <p>We believe humanity is one large connected family regardless of nationality, ethnicity, religion, age, gender, sexuality, or any other label.</p>
+                                <p><strong>Vision:</strong> A world without homelessness.<br>
+                                <strong>Values:</strong> Love, service, community, compassion, courage, and impact.<br>
+                                <strong>Mission:</strong> To use education, compassion and collaboration to end homelessness in the UK and beyond.</p>
+                                <p class="mb-0">We call those we support our <strong>friends</strong> — to celebrate their individuality and highlight the equality in our relationships. The foundation of our work is the power of human connection.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-pol -->
+
+    <!-- ============================================================ -->
+    <!-- TAB 4: REFERENCE                                             -->
+    <!-- ============================================================ -->
+    <div class="tab-pane fade" id="tab-ref" role="tabpanel">
+
+        <!-- Support Services -->
+        <div class="section-card card">
+            <div class="card-header bg-info">
+                <h5 class="section-header text-dark mb-0"><i class="bi bi-compass-fill me-2"></i>Support Services Directory</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-srv">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#srv-1">
+                                Emergency Numbers
+                            </button>
+                        </h2>
+                        <div id="srv-1" class="accordion-collapse collapse show" data-bs-parent="#acc-srv">
+                            <div class="accordion-body">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-6 col-md-3 text-center">
+                                        <div class="emergency-number">999</div>
+                                        <div class="fw-semibold small">Police, Fire, Ambulance</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 text-center">
+                                        <div class="emergency-number">112</div>
+                                        <div class="fw-semibold small">Alternative Emergency</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 text-center">
+                                        <div class="emergency-number" style="font-size:1.4rem;">101</div>
+                                        <div class="fw-semibold small">Non-urgent Police</div>
+                                    </div>
+                                    <div class="col-6 col-md-3 text-center">
+                                        <div class="emergency-number" style="font-size:1rem;">0800 789 321</div>
+                                        <div class="fw-semibold small">Anti-Terrorist Hotline</div>
+                                    </div>
+                                </div>
+                                <div class="highlight-box">
+                                    <strong>Shelter Emergency Helpline — <span class="text-danger">0808 800 4444</span></strong> (free)<br>
+                                    <small>Mon–Fri 8am–8pm &nbsp;|&nbsp; Weekends &amp; bank holidays 9am–5pm<br>
+                                    For anyone who is homeless, has nowhere to stay tonight, or is at risk of losing their home within two months.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#srv-2">
+                                Homeless Charities
+                            </button>
+                        </h2>
+                        <div id="srv-2" class="accordion-collapse collapse" data-bs-parent="#acc-srv">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">St Mungo's</div>
+                                        <div class="text-muted small mb-1">Homeless charity — London &amp; South</div>
+                                        <span class="tag">Outreach</span><span class="tag">Accommodation</span><span class="tag">Health</span>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">StreetLink</div>
+                                        <div class="text-muted small mb-1">Report a rough sleeper</div>
+                                        <span class="tag">Outreach</span>
+                                        <p class="mb-0 mt-2 small">Refer rough sleepers to local support via StreetLink — online or by phone.</p>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">Shelter</div>
+                                        <div class="text-muted small mb-1">Homeless charity</div>
+                                        <span class="tag">Support</span><span class="tag">Accommodation</span><span class="tag">Legal advice</span>
+                                        <p class="mb-0 mt-2 small">Emergency helpline: <strong>0808 800 4444</strong> (free)</p>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">The Passage</div>
+                                        <div class="text-muted small mb-1">Victoria, London</div>
+                                        <span class="tag">Support</span><span class="tag">Accommodation</span><span class="tag">Health</span><span class="tag">Food</span>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">Centrepoint</div>
+                                        <div class="text-muted small mb-1">Youth homelessness (16–25)</div>
+                                        <span class="tag">Accommodation</span><span class="tag">Education</span><span class="tag">Employment</span>
+                                        <p class="mb-0 mt-2 small">Over 60 accommodation services across London and other UK cities.</p>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">Homeless Application</div>
+                                        <div class="text-muted small mb-1">Council assessment</div>
+                                        <span class="tag">Housing</span>
+                                        <p class="mb-0 mt-2 small">Anyone homeless or likely to become homeless in the next 8 weeks has the right to a council assessment for help.</p>
+                                    </div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#srv-3">
+                                Food Services (Central London)
+                            </button>
+                        </h2>
+                        <div id="srv-3" class="accordion-collapse collapse" data-bs-parent="#acc-srv">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-4"><div class="service-card"><div class="fw-semibold">Sandwich Service</div><div class="text-muted small">Leicester Square</div></div></div>
+                                    <div class="col-12 col-md-4"><div class="service-card"><div class="fw-semibold">The Passage</div><div class="text-muted small">Victoria</div></div></div>
+                                    <div class="col-12 col-md-4"><div class="service-card"><div class="fw-semibold">The Soup Kitchen</div><div class="text-muted small">Tottenham Court Road</div></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#srv-4">
+                                Other Services
+                            </button>
+                        </h2>
+                        <div id="srv-4" class="accordion-collapse collapse" data-bs-parent="#acc-srv">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">HSBC No Fixed Address</div>
+                                        <div class="text-muted small mb-1">Bank account service</div>
+                                        <p class="mb-0 small">Helps people without a fixed address open a bank account. The person must be receiving support from a registered charity — a caseworker arranges the appointment.</p>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">ShowerBox</div>
+                                        <div class="text-muted small mb-1">Central London</div>
+                                        <span class="tag">Hygiene</span>
+                                        <p class="mb-0 mt-2 small">Shower facilities for people experiencing homelessness in Central London.</p>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">SWEP</div>
+                                        <div class="text-muted small mb-1">Severe Weather Emergency Protocol</div>
+                                        <span class="tag">Emergency</span>
+                                        <p class="mb-0 mt-2 small">Activated by councils during severe cold, providing emergency accommodation for rough sleepers.</p>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">Turn a Corner</div>
+                                        <div class="text-muted small mb-1">Mobile Community Library</div>
+                                        <p class="mb-0 mt-2 small">A mobile library providing books and resources.</p>
+                                    </div></div>
+                                    <div class="col-12 col-md-6"><div class="service-card">
+                                        <div class="fw-semibold">Project Servator</div>
+                                        <div class="text-muted small mb-1">Metropolitan Police</div>
+                                        <span class="tag">Public safety</span>
+                                        <p class="mb-0 mt-2 small">A policing tactic to deter, detect, and disrupt criminal activity including terrorism. Officers are trained to spot suspicious behaviour.</p>
+                                    </div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQs -->
+        <div class="section-card card">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="section-header text-dark mb-0"><i class="bi bi-question-circle-fill me-2 text-secondary"></i>Frequently Asked Questions</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="acc-faq">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq-1">
+                                Volunteering &amp; Participation
+                            </button>
+                        </h2>
+                        <div id="faq-1" class="accordion-collapse collapse show" data-bs-parent="#acc-faq">
+                            <div class="accordion-body">
+                                <div class="mb-3"><div class="fw-semibold">Can I join different routes?</div><p class="mb-0">Yes! Simply text Mikkel to be added to the relevant WhatsApp group.</p></div>
+                                <div class="mb-3"><div class="fw-semibold">Can I bring my dog?</div><p class="mb-0">We kindly ask volunteers not to bring dogs. They can be distracting, and we operate in crowded areas where it may not always be appropriate.</p></div>
+                                <div class="mb-3"><div class="fw-semibold">How large are the groups?</div><p class="mb-0">Up to 5–6 volunteers plus a Team Leader per group. Individual Skywalks can serve between 20 and 100 people.</p></div>
+                                <div class="mb-3"><div class="fw-semibold">How can I help with preparations?</div><p class="mb-0">Trolleys need to be packed before walks — sorting clothes, stocking supplies, and organising food items. Help is always welcome.</p></div>
+                                <div><div class="fw-semibold">Are there other volunteering opportunities?</div><p class="mb-0">Yes — UOS offers various roles including outreach and operational support. Reach out to find out more.</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-2">
+                                Items We Distribute
+                            </button>
+                        </h2>
+                        <div id="faq-2" class="accordion-collapse collapse" data-bs-parent="#acc-faq">
+                            <div class="accordion-body">
+                                <div class="mb-3"><div class="fw-semibold">What do we hand out?</div><p class="mb-0">Sandwiches, soup, crisps, sweets, water, hot drinks, underwear, socks, clothing, toiletries, and SIM cards when available.</p></div>
+                                <div class="mb-3"><div class="fw-semibold">Why do we include sweets?</div><ul class="mb-0"><li>Quick source of energy for those experiencing hunger or exhaustion</li><li>Comforting and can lift morale</li><li>Many of our homeless friends specifically request them</li></ul></div>
+                                <div class="mb-3"><div class="fw-semibold">Are wipes available?</div><p class="mb-0">Usually, but availability may vary due to high demand.</p></div>
+                                <div class="mb-3"><div class="fw-semibold">Do we provide SIM cards?</div><p class="mb-0">Yes, but availability is limited. Speak to the Team Leader to check current stock.</p></div>
+                                <div><div class="fw-semibold">Can we accommodate special requests?</div><p class="mb-0">We try our best — our resources depend on donations and availability.</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-3">
+                                Donations &amp; Funding
+                            </button>
+                        </h2>
+                        <div id="faq-3" class="accordion-collapse collapse" data-bs-parent="#acc-faq">
+                            <div class="accordion-body">
+                                <div class="mb-3"><div class="fw-semibold">How is UOS funded?</div><p class="mb-0">Private and corporate donations. As a registered charity since May 2022, we also aim to secure funding from foundations.</p></div>
+                                <div class="mb-3"><div class="fw-semibold">How can the public donate?</div><ul class="mb-0"><li><strong>Cash:</strong> Donation tin in the Team Leader rucksack</li><li><strong>Online:</strong> QR code on the trolley or UOS business cards</li></ul></div>
+                                <div><div class="fw-semibold">How do I get UOS branded clothing?</div><p class="mb-0">Orders are placed once or twice a year in bulk. Watch out for announcements from Mikkel.</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-ref -->
+
+</div><!-- /tab-content -->
+
+<!-- Footer -->
+<div class="text-center text-muted small py-3 border-top mt-2">
+    <p class="mb-1">
+        <a href="https://underoneskytogether.com" target="_blank" rel="noopener" class="text-decoration-none">underoneskytogether.com</a>
+        &nbsp;·&nbsp;
+        <a href="mailto:contact@underoneskytogether.com" class="text-decoration-none">contact@underoneskytogether.com</a>
+        &nbsp;·&nbsp;
+        Charity No. 1198910
+    </p>
+</div>
+
+</div><!-- /container -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
