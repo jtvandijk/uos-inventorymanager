@@ -104,9 +104,20 @@ If a replacement item exists (same category, gender, size, status=available):
 - Set `item.status = "given"`, `item.given_by = request.user`, `item.save()`
 - Create new `Reservation` on the replacement item (same person, date, route, notes)
 
-If no replacement available:
-- `Reservation.objects.filter(pk=...).update(status="missed", miss_reason="no_replacement", missed_at=now())`
+If no replacement available — **two paths depending on item type:**
+
+**Regular item:**
 - Set `item.status = "given"`, `item.save()`
+- Leave reservation as `status="reserved"` (just append a note) — do NOT mark as missed
+- `process_lapses` handles it: 7-day extension on first miss, then `status="missed" miss_reason="lapsed"` on second miss
+- `process_lapses` Pass 1 guards against resetting a "given" item to "available": `Item.objects.filter(pk=..., status__in=["reserved","packed"]).update(status="available")` — if the item is already "given", the update is a no-op
+
+**Special request item (category.is_special=True):**
+- Set `item.status = "given"`, `item.save()`
+- Find the SpecialRequest that was fulfilled by this item: `SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled")`
+- Revert it to `status="active"`, `fulfilled_at=None`, `fulfilled_by_item=None` — back in queue at original position
+- Mark the reservation as `status="missed", miss_reason="no_replacement"` (item is gone, SR handles re-queuing)
+- Next daily run of `process_special_lapses` Pass 2 will re-assign the request if another item is available
 
 The `view_item` context pre-computes `replacement_available` (True/False) so the modal text is context-aware before the user submits.
 
@@ -114,9 +125,9 @@ The `view_item` context pre-computes `replacement_available` (True/False) so the
 
 `/inventory/missed/` — admin-only, paginated (10/page), ordered by `-missed_at`.
 
-Stores reservations with `status="missed"`. Two reasons:
-- `"lapsed"` — two consecutive missed collections (via `process_lapses`)
-- `"no_replacement"` — given to someone else but no matching stock found (via `reassign_item`)
+Stores reservations with `status="missed"`. Reasons:
+- `"lapsed"` — two consecutive missed collections (via `process_lapses`), including regular items displaced by reassign
+- `"no_replacement"` — special request item given to someone else, SR reverted to queue (via `reassign_item`)
 
 Missed reservations stay linked to their original item in the DB. New reservations can be created for the same item without conflict — `Reservation.clean()` only checks `status="reserved"`.
 

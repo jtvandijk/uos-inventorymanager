@@ -476,29 +476,42 @@ def reassign_item(request, item_id):
         return redirect(f"{reverse('view_item', args=[replacement.id])}?next={next_url}")
 
     else:
-        miss_note = f"No replacement available on {timezone.now().date()} — item given to another person."
-        reservation.notes = (reservation.notes + "\n" + miss_note) if reservation.notes else miss_note
-        reservation.status = "missed"
-        reservation.miss_reason = "no_replacement"
-        reservation.missed_at = timezone.now()
-        # Use QuerySet.update() to avoid the cascade in Reservation.save()
-        Reservation.objects.filter(pk=reservation.pk).update(
-            status="missed",
-            miss_reason="no_replacement",
-            missed_at=timezone.now(),
-            notes=reservation.notes,
-        )
-
         item.status = "given"
         item.given_by = request.user
         item.given_at = timezone.now()
         item.updated_at = timezone.now()
         item.save()
 
-        messages.warning(
-            request,
-            f"No matching item in stock. {person}'s reservation has been recorded as missed.",
-        )
+        sr = SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled").first()
+        if sr:
+            # Revert special request to active at its original queue position
+            SpecialRequest.objects.filter(pk=sr.pk).update(
+                status="active",
+                fulfilled_at=None,
+                fulfilled_by_item=None,
+            )
+            miss_note = f"Auto-assigned item {item.code} given to another person on {timezone.now().date()} — returned to special request queue."
+            new_notes = (reservation.notes + "\n" + miss_note) if reservation.notes else miss_note
+            Reservation.objects.filter(pk=reservation.pk).update(
+                status="missed",
+                miss_reason="no_replacement",
+                missed_at=timezone.now(),
+                notes=new_notes,
+            )
+            messages.warning(
+                request,
+                f"No replacement {item.category.name} in stock. {person}'s special request has been returned to the queue.",
+            )
+        else:
+            # Regular item: keep reservation active so lapse logic applies (7-day extension, then release)
+            miss_note = f"Item {item.code} given to another person on {timezone.now().date()} — no replacement found yet, reservation kept active."
+            new_notes = (reservation.notes + "\n" + miss_note) if reservation.notes else miss_note
+            Reservation.objects.filter(pk=reservation.pk).update(notes=new_notes)
+            messages.warning(
+                request,
+                f"No matching item in stock. {person}'s reservation has been kept active — lapse logic will apply.",
+            )
+
         return redirect(next_url)
 
 

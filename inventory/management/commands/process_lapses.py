@@ -29,7 +29,8 @@ class Command(BaseCommand):
                 missed_at=timezone.now(),
                 notes=new_notes,
             )
-            Item.objects.filter(pk=res.item_id).update(
+            # Only release items not already given to someone else (e.g. via reassign with no replacement)
+            Item.objects.filter(pk=res.item_id, status__in=["reserved", "packed"]).update(
                 status="available",
                 updated_at=timezone.now(),
             )

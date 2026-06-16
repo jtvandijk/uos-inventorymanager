@@ -163,7 +163,7 @@
                 {% else %}
                 {% if sr.fulfilled_by_item %}
                 <a href="{% url 'view_item' sr.fulfilled_by_item.id %}?next={% url 'admin_special_requests' %}{% if status_filter %}?status={{ status_filter }}{% endif %}"
-                   class="btn btn-sm btn-outline-primary">View Item</a>
+                   class="btn btn-sm btn-primary">View</a>
                 {% else %}
                 <span class="text-muted">—</span>
                 {% endif %}
