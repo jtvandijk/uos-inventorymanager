@@ -45,6 +45,10 @@
                 </a>
                 {% endif %}
 
+                <a href="{% url 'resource_hub' %}" class="btn btn-outline-secondary btn-sm">
+                    Resources
+                </a>
+
                 <form method="post" action="{% url 'logout' %}" class="m-0">
                     {% csrf_token %}
                     <button class="btn btn-outline-secondary btn-sm">Logout</button>
