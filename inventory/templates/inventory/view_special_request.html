@@ -33,7 +33,6 @@
                         <col style="width: 40%">
                         <col style="width: 60%">
                     </colgroup>
-
                     <tr>
                         <th>Person</th>
                         <td class="fw-semibold">{{ sr.person }}</td>
@@ -111,42 +110,41 @@
                         <td>{{ sr.lapsed_at|date:"d M Y" }}</td>
                     </tr>
                     {% endif %}
-                    {% if sr.notes %}
                     <tr>
                         <th>Notes</th>
-                        <td style="white-space: pre-wrap;">{{ sr.notes }}</td>
+                        <td>{{ sr.notes|default:"—" }}</td>
                     </tr>
-                    {% endif %}
                 </table>
 
                 {% if sr.status == "active" %}
-                <div class="d-flex flex-column gap-2 mb-3">
+                <div class="d-flex justify-content-end gap-2 mt-2 flex-wrap">
+                    {% if sr.requested_by == request.user or is_admin %}
+                    <button class="btn btn-warning"
+                            data-bs-toggle="modal"
+                            data-bs-target="#cancelModal">
+                        Cancel Request
+                    </button>
+                    {% endif %}
                     {% now "Y-m-d" as today_date %}
                     {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
-                    <button class="btn btn-success w-100" disabled style="opacity:1;">
+                    <button class="btn btn-success" disabled style="opacity:1;">
                         <i class="bi bi-check-circle-fill me-1"></i>Confirmed today
                     </button>
                     {% else %}
                     <form method="post" action="{% url 'confirm_special_request' sr.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{% url 'view_special_request' sr.id %}?next={{ next|urlencode }}">
-                        <button class="btn btn-outline-success w-100">
-                            <i class="bi bi-check-circle me-1"></i>Still Active — reset 4-week clock
+                        <button class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i>Still Active
                         </button>
                     </form>
-                    {% endif %}
-
-                    {% if sr.requested_by == request.user or is_admin %}
-                    <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                        Cancel this request
-                    </button>
                     {% endif %}
                 </div>
                 {% endif %}
 
-                <a href="{{ next }}" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-arrow-left me-1"></i>Back
-                </a>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ next }}" class="btn btn-outline-secondary">Back</a>
+                </div>
 
             </div>
         </div>

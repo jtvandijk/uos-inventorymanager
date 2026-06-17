@@ -20,25 +20,8 @@
             <div class="text-muted small fst-italic mt-1">{{ sr.notes }}</div>
             {% endif %}
         </div>
-        <div class="d-flex flex-column gap-1 flex-shrink-0">
-            <a href="{% url 'view_special_request' sr.id %}?next=/inventory/volunteer/?tab=special"
-               class="btn btn-primary btn-sm px-3">View</a>
-            {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
-            <button class="btn btn-sm btn-success w-100" disabled style="opacity:1;">
-                <i class="bi bi-check-circle-fill"></i><br>
-                <small>Confirmed</small>
-            </button>
-            {% else %}
-            <form method="post" action="{% url 'confirm_special_request' sr.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
-                <button class="btn btn-sm btn-outline-success w-100" title="Still waiting — reset 4-week clock">
-                    <i class="bi bi-check-circle"></i><br>
-                    <small>Still Active</small>
-                </button>
-            </form>
-            {% endif %}
-        </div>
+        <a href="{% url 'view_special_request' sr.id %}?next=/inventory/volunteer/?tab=special"
+           class="btn btn-primary px-3 py-2 flex-shrink-0">View</a>
     </div>
 </div>
 {% empty %}
