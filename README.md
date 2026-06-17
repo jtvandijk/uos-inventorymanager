@@ -7,14 +7,14 @@ Built and maintained by a solo volunteer.
 ## Features
 
 - **Item management** — add items in bulk, auto-generate unique item codes per category (e.g. `UOS-JA00001`), edit and delete items
-- **Reservations** — reserve items for specific people with a collection date, route, and notes; volunteers can manage their own reservations
+- **Reservations** — reserve items for specific people with a collection date, route, and notes; any volunteer can edit any reservation (name, date, route, notes); volunteers can cancel their own
 - **Workflow** — items move through Available → Reserved → Packed → Collected
 - **Reservation lapse** — automated daily job extends uncollected reservations by 7 days on the first miss; releases back to stock on the second miss and logs to Missed Collections
 - **Re-assign** — if a reserved item is given to someone else in the field, volunteers can re-assign the reservation to another matching item in stock (or log it as missed if none available)
-- **Special requests** — queue-based system for items not normally in stock (tent, mobile phone, SIM card). Items auto-assign to the first person in queue (FIFO) when added to inventory; volunteers confirm requests are still active (button turns green when confirmed today); lapses after 4 weeks without confirmation
+- **Special requests** — queue-based system for items not normally in stock (backpack, sleeping bag, tent, mobile phone, SIM card). Items auto-assign to the first person in queue (FIFO) when added to inventory; volunteers confirm requests are still active (button turns green when confirmed today); lapses after 4 weeks without confirmation
 - **Run sheet** — per-date, per-route picking list with AJAX pack toggling and print support
 - **Missed Collections** — admin log of reservations that lapsed or could not be re-assigned, for tracking patterns over time
-- **Two roles** — Admin (full access) and Volunteer (reserve, cancel/edit own reservations, mark collected, re-assign, file special requests)
+- **Two roles** — Admin (full access) and Volunteer (reserve, edit any reservation, cancel own reservations, mark collected, re-assign, file special requests)
 - **Search & filter** — volunteer view: search by item code, category, or person name; filter by status (Available / Reserved / Packed / Special); sortable columns; paginated
 - **Resource hub** — public `/resources/` page with volunteer guidelines, policies, and reference information (no login required)
 
@@ -48,7 +48,7 @@ Two seed scripts are provided to bootstrap categories, sizes, routes, and test d
 python manage.py shell < seed_categories.py
 ```
 
-Creates 16 clothing categories and 3 special-request categories (Tent, Mobile Phone, SIM Card) with 2-character codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and the 7 outreach routes with their colours.
+Creates 12 clothing categories and 5 special-request categories (Backpack, Sleeping Bag, Tent, Mobile Phone, SIM Card) with 2-character codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and the 7 outreach routes with their colours.
 
 **Step 2 — test data** (wipes items and reservations, keeps everything else):
 

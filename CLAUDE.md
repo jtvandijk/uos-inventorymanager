@@ -21,7 +21,7 @@ Built and maintained by a solo volunteer. Keep solutions simple — no over-engi
 - Two roles: **Admin** (Django group named exactly `"Admin"`) and **Volunteer** (any authenticated non-admin user)
 - Permission check: `is_admin(user)` in `views.py` — checks `user.groups.filter(name="Admin")`
 - Always pass `is_admin` to templates via `add_role_context(request, context)`
-- Volunteers: reserve items, cancel/edit their own reservations, mark items collected, re-assign, file/confirm/cancel special requests
+- Volunteers: reserve items, edit any reservation, cancel their own reservations, mark items collected, re-assign, file/confirm/cancel special requests
 - Admins: everything, including pack/unpack, add/edit/delete items, run sheet, missed collections, special requests admin log
 
 ## Item workflow
@@ -38,7 +38,7 @@ Category codes are 2-character uppercase strings. Never let users edit item code
 **`next` parameter:** All action views accept a `?next=` param for redirect-after-action.
 On `view_item`, actions redirect back to view_item itself (preserving the original `next` for the Back button):
 ```
-href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next }}"
+href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
 ```
 
 **AJAX detection:** Run sheet uses `XMLHttpRequest` header for pack toggle.
@@ -144,7 +144,7 @@ Notes on missed reservations are always system-generated (appended by `process_l
 
 ## Special request system
 
-Handles items not normally in stock (Tent, Mobile Phone, SIM Card). Categories are flagged with `Category.is_special=True`.
+Handles items not normally in stock (Backpack, Sleeping Bag, Tent, Mobile Phone, SIM Card). Categories are flagged with `Category.is_special=True`.
 
 **`SpecialRequest` model fields:**
 ```python
@@ -162,7 +162,7 @@ lapsed_at = DateTimeField(null=True, blank=True)
 ```
 
 **Category extra fields:**
-- `Category.extra_field` choices: `none` / `device_code` / `phone_number`
+- `Category.extra_field` choices: `none` / `device_code` / `sim_number`
 - Mobile Phone → `device_code` field on Item; SIM Card → `sim_number` field on Item
 - add_item.html hides gender/size and shows the correct extra field via JS when a special category is selected
 - Validation is in `ItemForm.clean()` (not `Item.clean()`, since `Item.save()` doesn't call `full_clean()`)
@@ -212,7 +212,7 @@ my_res = Reservation.objects.filter(reserved_by=request.user, status="reserved"
 ```bash
 python manage.py shell < seed_categories.py
 ```
-Creates 16 standard categories + 3 special-request categories (Tent TE, Mobile Phone PH, SIM Card SI) with 2-char codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and 7 routes with exact brand colours. Safe to re-run — uses `get_or_create` throughout.
+Creates 12 standard categories + 5 special-request categories (Backpack BP, Sleeping Bag SL, Tent TE, Mobile Phone PH, SIM Card SI) with 2-char codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and 7 routes with exact brand colours. Safe to re-run — uses `get_or_create` throughout.
 
 **`seed_data.py`** — wipes items and reservations only (preserves users, categories, routes, sizes):
 ```bash
