@@ -166,7 +166,9 @@ lapsed_at = DateTimeField(null=True, blank=True)
 **Category extra fields:**
 - `Category.extra_field` choices: `none` / `device_code` / `sim_number`
 - Mobile Phone → `device_code` field on Item; SIM Card → `sim_number` field on Item
-- add_item.html hides gender/size and shows the correct extra field via JS when a special category is selected
+- add_item.html and edit_item.html both hide gender/size and show the correct extra field via JS when a special category is selected; both use `categories_data_json` (server-injected) to drive show/hide on category change
+- `view_item.html` shows a Device Code or SIM Number row when `item.category.extra_field != "none"`
+- `ItemEditForm` includes `device_code` and `sim_number` fields (in addition to category/gender/size)
 - Validation is in `ItemForm.clean()` (not `Item.clean()`, since `Item.save()` doesn't call `full_clean()`)
 
 **Auto-assignment** (`_try_auto_assign_special(item, by_user=None, note_reason=None)` in views.py):
@@ -190,14 +192,14 @@ Pass 2 — re-assign available special items to next in queue (FIFO by `requeste
 
 **"Still Active" confirmation:** Any volunteer can press it; updates `last_confirmed_at=now()` via `QuerySet.update()`. Queue position (original `requested_at`) is unchanged.
 
-- **Volunteer page:** button renders as solid green "Confirmed" (disabled, `opacity:1`) if confirmed today, otherwise shows "Still Active". Checked with `{% now "Y-m-d" as today_date %}` and `sr.last_confirmed_at|date:"Y-m-d" == today_date`. After confirming, redirects to `/inventory/volunteer/?tab=special`.
+- **Volunteer page:** Still Active and Cancel Request live on `view_special_request` (detail page), not on the SR list card. The card has a single View button (same style as item cards). Checked with `{% now "Y-m-d" as today_date %}` and `sr.last_confirmed_at|date:"Y-m-d" == today_date` — confirmed today renders as disabled green button.
 - **Admin page:** "Confirmed" badge appears inline in the Status column when confirmed today. Actions column shows an icon-only check-circle button only if not yet confirmed today.
 
-Cancel button on both pages uses a Bootstrap modal for confirmation.
+**`view_special_request`** (`/inventory/special-request/<id>/`) — detail page for any SR, accessible to all logged-in users. Shows person, category, route, status, dates, notes, assigned item link. For active SRs: Still Active button (any volunteer) and Cancel Request button (requester or admin, modal-confirmed) right-aligned above a Back button on the left — same layout as `view_item`. Cancel redirects to `?next` param.
 
-**Volunteer view:** 3rd toggle tab "Requests" alongside Available/Reserved. Shows all active requests with "Still Active" button. Own requests get a "Cancel" button. A "Today's collections" section appears above the requests list showing fulfilled SRs whose `reserved_for_date` is today — with a packed/unpacked visual distinction (blue border + "Packed ✓" badge vs yellow border + "Not packed yet") and a View button to mark collected.
+**Volunteer view:** 3rd toggle tab "Requests" alongside Available/Reserved. Shows all active SR cards with a single View button each (links to `view_special_request`). A "Today's collections" section above shows fulfilled SRs with `reserved_for_date` today — packed/unpacked visual distinction and a View button to go to `view_item`.
 
-SR list is AJAX-paginated via `_sr_list.html` partial (same pattern as `_item_list.html` for items). Pagination uses `<button onclick="updateSRList(N)">` — not `<a href>` links. Cancel button calls `confirmCancelSR(id, person, category)` which populates a single shared `#cancelSRModal` — do NOT use per-SR modals here, they get wiped on every AJAX refresh.
+SR list is AJAX-paginated via `_sr_list.html` partial (same pattern as `_item_list.html` for items). Pagination uses `<button onclick="updateSRList(N)">` — not `<a href>` links. Do NOT add per-SR cancel modals to the partial — they get wiped on every AJAX refresh. Cancel lives on `view_special_request` instead.
 
 My Reservations (top of volunteer page) excludes items auto-assigned via special request:
 ```python
