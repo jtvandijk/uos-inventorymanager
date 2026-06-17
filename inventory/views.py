@@ -658,9 +658,6 @@ def volunteer_view(request):
     ).select_related("category", "route", "requested_by").order_by("requested_at")
     sr_paginator = Paginator(sr_qs, 3)
     sr_page_obj = sr_paginator.get_page(request.GET.get("sr_page"))
-    sr_elided_range = list(sr_paginator.get_elided_page_range(sr_page_obj.number, on_each_side=2, on_ends=1))
-
-
     context = {
         "page_obj": page_obj,
         "my_reservations": res_page_obj,
@@ -668,7 +665,6 @@ def volunteer_view(request):
         "search": search,
         "status_filter": status_filter,
         "sr_page_obj": sr_page_obj,
-        "sr_elided_range": sr_elided_range,
         "sr_fulfilled": sr_fulfilled_qs,
     }
 

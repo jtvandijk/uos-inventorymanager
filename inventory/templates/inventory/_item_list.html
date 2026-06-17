@@ -74,6 +74,10 @@
                     &laquo; Prev
                 </button>
             </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">&laquo; Prev</span>
+            </li>
             {% endif %}
 
             <li class="page-item disabled">
@@ -88,6 +92,10 @@
                         onclick="updateList(null, {{ page_obj.next_page_number }})">
                     Next &raquo;
                 </button>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Next &raquo;</span>
             </li>
             {% endif %}
 
