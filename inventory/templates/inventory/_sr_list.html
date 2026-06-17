@@ -20,33 +20,25 @@
             <div class="text-muted small fst-italic mt-1">{{ sr.notes }}</div>
             {% endif %}
         </div>
-        {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
-        <button class="btn btn-sm btn-success flex-shrink-0" disabled style="opacity:1;">
-            <i class="bi bi-check-circle-fill"></i><br>
-            <small>Confirmed</small>
-        </button>
-        {% else %}
-        <form method="post" action="{% url 'confirm_special_request' sr.id %}">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
-            <button class="btn btn-sm btn-outline-success flex-shrink-0" title="Still waiting — reset 4-week clock">
-                <i class="bi bi-check-circle"></i><br>
-                <small>Still Active</small>
+        <div class="d-flex flex-column gap-1 flex-shrink-0">
+            <a href="{% url 'view_special_request' sr.id %}?next=/inventory/volunteer/?tab=special"
+               class="btn btn-primary btn-sm px-3">View</a>
+            {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
+            <button class="btn btn-sm btn-success w-100" disabled style="opacity:1;">
+                <i class="bi bi-check-circle-fill"></i><br>
+                <small>Confirmed</small>
             </button>
-        </form>
-        {% endif %}
-    </div>
-    <div class="mt-2 pt-2 border-top d-flex gap-2">
-        <a href="{% url 'view_special_request' sr.id %}?next=/inventory/volunteer/?tab=special"
-           class="btn btn-sm btn-outline-primary">
-            View
-        </a>
-        {% if sr.requested_by == request.user %}
-        <button class="btn btn-sm btn-outline-danger"
-                onclick="confirmCancelSR({{ sr.id }}, '{{ sr.person|escapejs }}', '{{ sr.category.name|escapejs }}')">
-            Cancel
-        </button>
-        {% endif %}
+            {% else %}
+            <form method="post" action="{% url 'confirm_special_request' sr.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
+                <button class="btn btn-sm btn-outline-success w-100" title="Still waiting — reset 4-week clock">
+                    <i class="bi bi-check-circle"></i><br>
+                    <small>Still Active</small>
+                </button>
+            </form>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% empty %}
