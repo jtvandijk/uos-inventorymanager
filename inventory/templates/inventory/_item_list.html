@@ -44,7 +44,7 @@
                 </div>
 
                 <!-- Action -->
-                <a href="{% url 'view_item' item.id %}?next=/inventory/volunteer/"
+                <a href="{% url 'view_item' item.id %}?next={{ request.get_full_path|urlencode }}"
                    class="btn btn-primary px-3 py-2 flex-shrink-0">
                     View
                 </a>
