@@ -664,12 +664,32 @@ def volunteer_view(request):
     paginator = Paginator(items.order_by("code"), 3)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        html = render_to_string(
-            "inventory/_item_list.html",
-            {"page_obj": page_obj, "status_filter": status_filter},
-            request=request,
+    sr_search = request.GET.get("q", "")
+    sr_qs = SpecialRequest.objects.filter(
+        status="active",
+    ).select_related("category", "route", "requested_by").order_by("requested_at")
+    if sr_search:
+        sr_qs = sr_qs.filter(
+            Q(person__icontains=sr_search) |
+            Q(category__name__icontains=sr_search) |
+            Q(route__name__icontains=sr_search)
         )
+    sr_paginator = Paginator(sr_qs, 3)
+    sr_page_obj = sr_paginator.get_page(request.GET.get("sr_page"))
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        if request.GET.get("type") == "sr":
+            html = render_to_string(
+                "inventory/_sr_list.html",
+                {"sr_page_obj": sr_page_obj, "sr_search": sr_search},
+                request=request,
+            )
+        else:
+            html = render_to_string(
+                "inventory/_item_list.html",
+                {"page_obj": page_obj, "status_filter": status_filter},
+                request=request,
+            )
         return JsonResponse({"html": html})
 
     my_res = Reservation.objects.filter(
@@ -687,19 +707,6 @@ def volunteer_view(request):
         fulfilled_by_item__reservation__reserved_for_date=timezone.localdate(),
         fulfilled_by_item__reservation__status__in=["reserved", "packed"],
     ).select_related("category", "route", "requested_by", "fulfilled_by_item").order_by("fulfilled_at")
-
-    sr_search = request.GET.get("q", "")
-    sr_qs = SpecialRequest.objects.filter(
-        status="active",
-    ).select_related("category", "route", "requested_by").order_by("requested_at")
-    if sr_search:
-        sr_qs = sr_qs.filter(
-            Q(person__icontains=sr_search) |
-            Q(category__name__icontains=sr_search) |
-            Q(route__name__icontains=sr_search)
-        )
-    sr_paginator = Paginator(sr_qs, 3)
-    sr_page_obj = sr_paginator.get_page(request.GET.get("sr_page"))
     context = {
         "page_obj": page_obj,
         "my_reservations": res_page_obj,

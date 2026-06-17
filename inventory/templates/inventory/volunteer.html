@@ -219,115 +219,34 @@
             {% endif %}
 
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted small">Active special requests — press <strong>Still Active</strong> to confirm the person still needs the item and reset the 4-week clock.</span>
+                <span class="text-muted small">Special requests lapse automatically after 4 weeks — press <strong>Still Active</strong> to confirm the person still needs the item and keep the request in the queue.</span>
             </div>
 
-            <form method="get" class="mb-3">
-                <input type="hidden" name="tab" value="special">
+            <div class="mb-3">
                 <div class="input-group">
                     <span class="input-group-text">🔍</span>
-                    <input type="text" name="q" value="{{ sr_search }}"
+                    <input type="text" id="srSearchInput"
+                           value="{{ sr_search }}"
                            class="form-control"
                            placeholder="Search by name, category, or route…"
                            autocomplete="off">
-                    {% if sr_search %}
-                    <a href="?tab=special" class="btn btn-outline-secondary">Clear</a>
-                    {% endif %}
                 </div>
-            </form>
+            </div>
 
             <a href="{% url 'create_special_request' %}?next=/inventory/volunteer/?tab=special"
                class="btn btn-warning btn-sm mb-3 w-100">
                 <i class="bi bi-plus-lg me-1"></i>New Special Request
             </a>
-            {% for sr in sr_page_obj %}
-            <div class="card p-3 mb-2 shadow-sm">
-                <div class="d-flex justify-content-between align-items-start gap-2">
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold">{{ sr.person }}</div>
-                        <span class="badge bg-warning text-dark mb-1">{{ sr.category.name }}</span>
-                        {% if sr.route %}
-                        <span class="badge ms-1 mb-1"
-                              style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
-                            {{ sr.route.name }}
-                        </span>
-                        {% endif %}
-                        <div class="text-muted small mt-1">
-                            Requested: {{ sr.requested_at|date:"d M Y" }}
-                            &nbsp;·&nbsp;
-                            Last confirmed: {{ sr.last_confirmed_at|date:"d M Y" }}
-                        </div>
-                        {% if sr.notes %}
-                        <div class="text-muted small fst-italic mt-1">{{ sr.notes }}</div>
-                        {% endif %}
-                    </div>
-                    {% now "Y-m-d" as today_date %}
-                    {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
-                    <button class="btn btn-sm btn-success flex-shrink-0" disabled style="opacity:1;">
-                        <i class="bi bi-check-circle-fill"></i><br>
-                        <small>Confirmed</small>
-                    </button>
-                    {% else %}
-                    <form method="post" action="{% url 'confirm_special_request' sr.id %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
-                        <button class="btn btn-sm btn-outline-success flex-shrink-0" title="Still waiting — reset 4-week clock">
-                            <i class="bi bi-check-circle"></i><br>
-                            <small>Still Active</small>
-                        </button>
-                    </form>
-                    {% endif %}
-                </div>
-                {% if sr.requested_by == request.user %}
-                <div class="mt-2 pt-2 border-top">
-                    <button class="btn btn-sm btn-outline-danger w-100"
-                            data-bs-toggle="modal"
-                            data-bs-target="#cancelModal{{ sr.id }}">
-                        Cancel this request
-                    </button>
-                </div>
-                {% endif %}
+            <div id="srList">
+            {% include "inventory/_sr_list.html" %}
             </div>
-            {% empty %}
-            <p class="text-muted text-center py-3">No active special requests.</p>
-            {% endfor %}
-
-            {% if sr_page_obj.paginator.num_pages > 1 %}
-            <div class="d-flex justify-content-center mt-2">
-                <ul class="pagination pagination-sm mb-0">
-                    {% if sr_page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link sr-page-link" href="?tab=special&sr_page={{ sr_page_obj.previous_page_number }}{% if sr_search %}&q={{ sr_search|urlencode }}{% endif %}">&laquo; Prev</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">&laquo; Prev</span>
-                    </li>
-                    {% endif %}
-                    <li class="page-item disabled">
-                        <span class="page-link">{{ sr_page_obj.number }} / {{ sr_page_obj.paginator.num_pages }}</span>
-                    </li>
-                    {% if sr_page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link sr-page-link" href="?tab=special&sr_page={{ sr_page_obj.next_page_number }}{% if sr_search %}&q={{ sr_search|urlencode }}{% endif %}">Next &raquo;</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Next &raquo;</span>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-            {% endif %}
         </div>
 
     </div>
 </div>
 
-<!-- JS -->
-{% for sr in sr_page_obj %}
-{% if sr.requested_by == request.user %}
-<div class="modal fade" id="cancelModal{{ sr.id }}" tabindex="-1">
+<!-- Shared SR cancel modal -->
+<div class="modal fade" id="cancelSRModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -335,11 +254,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                Cancel the request for <strong>{{ sr.person }}</strong> ({{ sr.category.name }})?
+                Cancel the request for <strong id="cancelSRPerson"></strong>?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep it</button>
-                <form method="post" action="{% url 'cancel_special_request' sr.id %}">
+                <form method="post" id="cancelSRForm" action="">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
                     <button type="submit" class="btn btn-danger">Yes, cancel</button>
@@ -348,8 +267,6 @@
         </div>
     </div>
 </div>
-{% endif %}
-{% endfor %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -462,29 +379,48 @@ function updateToggleButtons(status) {
     }
 }
 
+let srTimeout = null;
+
+function updateSRList(page = 1) {
+    const q = document.getElementById("srSearchInput")?.value || "";
+    const params = new URLSearchParams();
+    params.set("type", "sr");
+    params.set("sr_page", page);
+    if (q) params.set("q", q);
+
+    fetch("?" + params.toString(), {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("srList").innerHTML = data.html;
+    });
+}
+
+function confirmCancelSR(srId, person, category) {
+    document.getElementById("cancelSRPerson").textContent = person + " (" + category + ")";
+    document.getElementById("cancelSRForm").action = "/inventory/special-request/" + srId + "/cancel/";
+    new bootstrap.Modal(document.getElementById("cancelSRModal")).show();
+}
+
 // Initialise everything
 document.addEventListener("DOMContentLoaded", function() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("tab") === "special") {
         showTab("special");
-        if (params.has("sr_page")) {
-            const saved = sessionStorage.getItem("srScrollPos");
-            if (saved !== null) {
-                window.scrollTo(0, parseInt(saved));
-                sessionStorage.removeItem("srScrollPos");
-            }
-        }
     } else {
         updateToggleButtons("{{ status_filter }}");
     }
     initAlerts();
     autoDismissAlerts();
 
-    document.querySelectorAll(".sr-page-link").forEach(function(link) {
-        link.addEventListener("click", function() {
-            sessionStorage.setItem("srScrollPos", window.scrollY);
+    const srInput = document.getElementById("srSearchInput");
+    if (srInput) {
+        srInput.addEventListener("input", function() {
+            clearTimeout(srTimeout);
+            srTimeout = setTimeout(() => updateSRList(1), 400);
         });
-    });
+    }
 });
 </script>
 

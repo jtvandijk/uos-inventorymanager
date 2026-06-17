@@ -1,0 +1,78 @@
+{% now "Y-m-d" as today_date %}
+{% for sr in sr_page_obj %}
+<div class="card p-3 mb-2 shadow-sm">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="flex-grow-1">
+            <div class="fw-semibold">{{ sr.person }}</div>
+            <span class="badge bg-warning text-dark mb-1">{{ sr.category.name }}</span>
+            {% if sr.route %}
+            <span class="badge ms-1 mb-1"
+                  style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
+                {{ sr.route.name }}
+            </span>
+            {% endif %}
+            <div class="text-muted small mt-1">
+                Requested: {{ sr.requested_at|date:"d M Y" }}
+                &nbsp;·&nbsp;
+                Last confirmed: {{ sr.last_confirmed_at|date:"d M Y" }}
+            </div>
+            {% if sr.notes %}
+            <div class="text-muted small fst-italic mt-1">{{ sr.notes }}</div>
+            {% endif %}
+        </div>
+        {% if sr.last_confirmed_at|date:"Y-m-d" == today_date %}
+        <button class="btn btn-sm btn-success flex-shrink-0" disabled style="opacity:1;">
+            <i class="bi bi-check-circle-fill"></i><br>
+            <small>Confirmed</small>
+        </button>
+        {% else %}
+        <form method="post" action="{% url 'confirm_special_request' sr.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="/inventory/volunteer/?tab=special">
+            <button class="btn btn-sm btn-outline-success flex-shrink-0" title="Still waiting — reset 4-week clock">
+                <i class="bi bi-check-circle"></i><br>
+                <small>Still Active</small>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    {% if sr.requested_by == request.user %}
+    <div class="mt-2 pt-2 border-top">
+        <button class="btn btn-sm btn-outline-danger w-100"
+                onclick="confirmCancelSR({{ sr.id }}, '{{ sr.person|escapejs }}', '{{ sr.category.name|escapejs }}')">
+            Cancel this request
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% empty %}
+<p class="text-muted text-center py-3">No active special requests{% if sr_search %} matching "{{ sr_search }}"{% endif %}.</p>
+{% endfor %}
+
+{% if sr_page_obj.paginator.num_pages > 1 %}
+<div class="d-flex justify-content-center mt-2">
+    <ul class="pagination pagination-sm mb-0">
+        {% if sr_page_obj.has_previous %}
+        <li class="page-item">
+            <button class="page-link" onclick="updateSRList({{ sr_page_obj.previous_page_number }})">&laquo; Prev</button>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">&laquo; Prev</span>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+            <span class="page-link">{{ sr_page_obj.number }} / {{ sr_page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if sr_page_obj.has_next %}
+        <li class="page-item">
+            <button class="page-link" onclick="updateSRList({{ sr_page_obj.next_page_number }})">Next &raquo;</button>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Next &raquo;</span>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}

@@ -42,8 +42,9 @@ On `view_item`, actions redirect back to view_item itself (preserving the origin
 href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
 ```
 
-**AJAX detection:** Run sheet uses `XMLHttpRequest` header for pack toggle.
+**AJAX detection:** Used in two places — run sheet (pack toggle) and volunteer view (item list + SR list).
 Check with `request.headers.get("x-requested-with") == "XMLHttpRequest"`.
+In `volunteer_view`, distinguish which partial to return via `request.GET.get("type")`: `"sr"` returns `_sr_list.html`, anything else returns `_item_list.html`.
 Do NOT add Django messages inside AJAX-handled branches — they accumulate silently.
 
 **Size options:** Populated via AJAX (`/inventory/get-sizes/?category_id=X`) on category change.
@@ -195,6 +196,8 @@ Pass 2 — re-assign available special items to next in queue (FIFO by `requeste
 Cancel button on both pages uses a Bootstrap modal for confirmation.
 
 **Volunteer view:** 3rd toggle tab "Requests" alongside Available/Reserved. Shows all active requests with "Still Active" button. Own requests get a "Cancel" button. A "Today's collections" section appears above the requests list showing fulfilled SRs whose `reserved_for_date` is today — with a packed/unpacked visual distinction (blue border + "Packed ✓" badge vs yellow border + "Not packed yet") and a View button to mark collected.
+
+SR list is AJAX-paginated via `_sr_list.html` partial (same pattern as `_item_list.html` for items). Pagination uses `<button onclick="updateSRList(N)">` — not `<a href>` links. Cancel button calls `confirmCancelSR(id, person, category)` which populates a single shared `#cancelSRModal` — do NOT use per-SR modals here, they get wiped on every AJAX refresh.
 
 My Reservations (top of volunteer page) excludes items auto-assigned via special request:
 ```python
