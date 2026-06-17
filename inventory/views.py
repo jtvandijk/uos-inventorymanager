@@ -482,7 +482,8 @@ def reassign_item(request, item_id):
             f"Re-assigned to {replacement.code}. {person}'s reservation moved with collection date {original_date}.",
         )
         from django.urls import reverse
-        return redirect(f"{reverse('view_item', args=[replacement.id])}?next={next_url}")
+        from urllib.parse import quote
+        return redirect(f"{reverse('view_item', args=[replacement.id])}?next={quote(next_url, safe='')}")
 
     else:
         item.status = "given"
