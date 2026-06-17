@@ -116,8 +116,9 @@ Nginx proxies to Gunicorn with `X-Forwarded-Proto` headers for HTTPS.
 | View inventory | | ✓ |
 | Add / edit / delete items | | ✓ |
 | Reserve items | ✓ | ✓ |
-| Edit / cancel own reservations | ✓ | ✓ |
-| Edit / cancel any reservation | | ✓ |
+| Edit any reservation | ✓ | ✓ |
+| Cancel own reservations | ✓ | ✓ |
+| Cancel any reservation | | ✓ |
 | Re-assign reservation | ✓ | ✓ |
 | Mark as packed / unpacked | | ✓ |
 | Mark as collected | ✓ | ✓ |

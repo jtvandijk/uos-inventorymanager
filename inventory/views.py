@@ -258,9 +258,6 @@ def reserve_item(request, item_id):
 def edit_reservation(request, reservation_id):
     reservation = get_object_or_404(Reservation, id=reservation_id)
 
-    if reservation.reserved_by != request.user and not is_admin(request.user):
-        return redirect("inventory")
-
     item = reservation.item
     next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/"
 

@@ -159,12 +159,10 @@
                 {% if reservation %}
                 <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
                     <h2 class="mb-0">Reservation Details</h2>
-                    {% if is_admin or reservation.reserved_by == request.user %}
                     <a href="{% url 'edit_reservation' reservation.id %}?next={{ next|urlencode }}"
-                       class="btn btn-outline-secondary btn-sm">
-                        Edit
-                    </a>
-                    {% endif %}
+                   class="btn btn-outline-secondary btn-sm">
+                    Edit
+                </a>
                 </div>
 
                 <table class="table table-bordered">
