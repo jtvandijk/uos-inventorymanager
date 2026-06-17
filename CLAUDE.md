@@ -115,8 +115,10 @@ If no replacement available — **two paths depending on item type:**
 - Set `item.status = "given"`, `item.save()`
 - Find the SpecialRequest that was fulfilled by this item: `SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled")`
 - Revert it to `status="active"`, `fulfilled_at=None`, `fulfilled_by_item=None` — back in queue at original position
-- Mark the reservation as `status="missed", miss_reason="no_replacement"` (item is gone, SR handles re-queuing)
-- Next daily run of `process_special_lapses` Pass 2 will re-assign the request if another item is available
+- Delete the reservation via `Reservation.objects.filter(pk=...).delete()` (queryset delete bypasses cascade; item already "given")
+- Do NOT log as missed — person is still being served via SR queue
+- Immediately check for another available item of the same category; if found, call `_try_auto_assign_special(other_item, note_reason="item given on walk")` to re-assign without waiting for daily cron
+- If no other item: SR stays active until one is added (`add_item` triggers auto-assign) or daily `process_special_lapses` Pass 2 fires
 
 The `view_item` context pre-computes `replacement_available` (True/False) so the modal text is context-aware before the user submits.
 
@@ -165,12 +167,15 @@ lapsed_at = DateTimeField(null=True, blank=True)
 - add_item.html hides gender/size and shows the correct extra field via JS when a special category is selected
 - Validation is in `ItemForm.clean()` (not `Item.clean()`, since `Item.save()` doesn't call `full_clean()`)
 
-**Auto-assignment** (`_try_auto_assign_special` in views.py):
+**Auto-assignment** (`_try_auto_assign_special(item, by_user=None, note_reason=None)` in views.py):
 - Called from `add_item` view after each item is saved
+- Also called from `cancel_reservation` (after special item freed) with `note_reason="cancellation"`
+- Also called from `reassign_item` (after SR re-queued, if another item available) with `note_reason="item given on walk"`
 - Also called from `process_special_lapses` (Pass 2) after lapses free up the queue
 - Finds oldest active request for the same category (`order_by("requested_at")`)
 - Collection date = next occurrence of the same weekday as `req.requested_at` (`_next_walk_day(req.requested_at.weekday())`) — preserves the walk day
 - Creates Reservation via `res.save()` (cascades item→reserved), then `SpecialRequest.objects.filter(pk=...).update(status="fulfilled", ...)`
+- Reservation note: `"Re-assigned following {note_reason} (originally requested {date})."` when `note_reason` is set; otherwise `"Special request auto-assigned (originally requested {date})."`
 
 **Lapse management command:** `inventory/management/commands/process_special_lapses.py`
 Run daily AFTER `process_lapses` (so freed items get re-queued in the same daily job):

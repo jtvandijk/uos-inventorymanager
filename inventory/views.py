@@ -37,7 +37,7 @@ def _next_walk_day(weekday):
     return today + timedelta(days=days)
 
 
-def _try_auto_assign_special(item, by_user=None):
+def _try_auto_assign_special(item, by_user=None, note_reason=None):
     if not item.category.is_special:
         return None
     req = SpecialRequest.objects.filter(
@@ -46,12 +46,16 @@ def _try_auto_assign_special(item, by_user=None):
     ).order_by("requested_at").first()
     if not req:
         return None
+    if note_reason:
+        note = f"Re-assigned following {note_reason} (originally requested {req.requested_at.date()})."
+    else:
+        note = f"Special request auto-assigned (originally requested {req.requested_at.date()})."
     res = Reservation(
         item=item,
         person=req.person,
         route=req.route,
         reserved_for_date=_next_walk_day(req.requested_at.weekday()),
-        notes=f"Special request auto-assigned (originally requested {req.requested_at.date()}).",
+        notes=note,
         reserved_by=by_user or req.requested_by,
     )
     res.save()
@@ -300,7 +304,7 @@ def cancel_reservation(request, item_id):
                 )
         reservation.delete()  # sets item → available via model override
         if item.category.is_special:
-            _try_auto_assign_special(item, by_user=request.user)
+            _try_auto_assign_special(item, by_user=request.user, note_reason="cancellation")
         messages.success(request, "Reservation cancelled.")
 
     return redirect(request.GET.get("next") or "/inventory/")
@@ -491,24 +495,29 @@ def reassign_item(request, item_id):
 
         sr = SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled").first()
         if sr:
-            # Revert special request to active at its original queue position
+            # Revert to active at original queue position — person is still being served via SR
             SpecialRequest.objects.filter(pk=sr.pk).update(
                 status="active",
                 fulfilled_at=None,
                 fulfilled_by_item=None,
             )
-            miss_note = f"Auto-assigned item {item.code} given to another person on {timezone.now().date()} — returned to special request queue."
-            new_notes = (reservation.notes + "\n" + miss_note) if reservation.notes else miss_note
-            Reservation.objects.filter(pk=reservation.pk).update(
-                status="missed",
-                miss_reason="no_replacement",
-                missed_at=timezone.now(),
-                notes=new_notes,
-            )
-            messages.warning(
-                request,
-                f"No replacement {item.category.name} in stock. {person}'s special request has been returned to the queue.",
-            )
+            # Remove reservation — do NOT log as missed, person is back in queue
+            # Use queryset delete to bypass model.delete() override (item already "given")
+            Reservation.objects.filter(pk=reservation.pk).delete()
+
+            # Immediately try to re-assign if another item of this category is available
+            other_item = Item.objects.filter(category=item.category, status="available").first()
+            if other_item:
+                _try_auto_assign_special(other_item, by_user=request.user, note_reason="item given on walk")
+                messages.warning(
+                    request,
+                    f"{item.category.name} given on walk. {person}'s special request immediately re-assigned to {other_item.code}.",
+                )
+            else:
+                messages.warning(
+                    request,
+                    f"{item.category.name} given on walk. {person}'s special request returned to the queue — will be assigned when one becomes available.",
+                )
         else:
             # Regular item: item is definitively gone, log immediately as missed
             miss_note = f"Item {item.code} given to another person on {timezone.now().date()} — no replacement available."
