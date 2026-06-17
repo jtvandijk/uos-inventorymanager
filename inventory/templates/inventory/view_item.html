@@ -268,6 +268,11 @@
                     ({{ item.get_gender_display }}, {{ item.size }}) is available in stock.<br><br>
                     Re-assigning will move <strong>{{ reservation.person }}</strong>'s reservation
                     to the new item, keeping the same collection date.
+                {% elif item.category.is_special %}
+                    <strong>No matching item is currently in stock.</strong><br><br>
+                    Re-assigning will give <strong>{{ item.code }}</strong> to another person.
+                    <strong>{{ reservation.person }}</strong>'s special request will be returned
+                    to the waiting list at their original position.
                 {% else %}
                     <strong>No matching item is currently in stock.</strong><br><br>
                     Re-assigning will give <strong>{{ item.code }}</strong> to another person
