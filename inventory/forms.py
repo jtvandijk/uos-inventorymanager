@@ -2,7 +2,8 @@ import re
 from datetime import date
 
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.models import User
 
 from .models import Category, Item, Reservation, Route, SpecialRequest
 
@@ -18,6 +19,33 @@ class StyledLoginForm(AuthenticationForm):
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={"class": "form-control"})
     )
+
+
+class SignUpForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ["username"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs.update({
+            "class": "form-control",
+            "placeholder": "e.g. johnsmith or johns",
+            "autocomplete": "off",
+        })
+        self.fields["username"].help_text = None
+        self.fields["password1"].widget.attrs.update({"class": "form-control"})
+        self.fields["password2"].widget.attrs.update({"class": "form-control"})
+
+    def clean_username(self):
+        username = self.cleaned_data.get("username", "")
+        if not re.match(r'^[a-z][a-z0-9]*$', username):
+            raise forms.ValidationError(
+                "Lowercase letters and numbers only, starting with a letter — no spaces or symbols."
+            )
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("This username is already taken.")
+        return username
 
 
 # ---------------------------

@@ -7,8 +7,10 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.contrib import messages
 
+from django.contrib.auth.models import User
+
 from .models import Category, SizeOption, Item, Reservation, Route, SpecialRequest
-from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm
+from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, SignUpForm
 
 import re
 
@@ -22,7 +24,10 @@ def is_admin(user):
 
 
 def add_role_context(request, context):
-    context["is_admin"] = is_admin(request.user)
+    admin = is_admin(request.user)
+    context["is_admin"] = admin
+    if admin:
+        context["pending_count"] = User.objects.filter(is_active=False).count()
     return context
 
 
@@ -865,3 +870,48 @@ def get_next_code(request):
     return JsonResponse({
         "code": f"{prefix}-{cat_code}{next_number}"
     })
+
+
+# ---------------------------
+# User sign-up & approval
+# ---------------------------
+
+def signup_view(request):
+    if request.user.is_authenticated:
+        return redirect("inventory" if is_admin(request.user) else "volunteer")
+
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            return render(request, "inventory/signup.html", {"success": True})
+    else:
+        form = SignUpForm()
+
+    return render(request, "inventory/signup.html", {"form": form})
+
+
+@login_required
+def pending_users_view(request):
+    if not is_admin(request.user):
+        return redirect("volunteer")
+    pending = User.objects.filter(is_active=False).order_by("date_joined")
+    return render(request, "inventory/pending_users.html", add_role_context(request, {"pending": pending}))
+
+
+@login_required
+def approve_user(request, user_id):
+    if not is_admin(request.user) or request.method != "POST":
+        return redirect("pending_users")
+    User.objects.filter(pk=user_id, is_active=False).update(is_active=True)
+    return redirect("pending_users")
+
+
+@login_required
+def reject_user(request, user_id):
+    if not is_admin(request.user) or request.method != "POST":
+        return redirect("pending_users")
+    User.objects.filter(pk=user_id, is_active=False, is_superuser=False).delete()
+    return redirect("pending_users")
