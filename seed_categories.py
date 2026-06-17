@@ -33,8 +33,6 @@ for name, code, size_type in [
     ("Shoes",        "SH", "shoes"),
     ("Boots",        "BO", "shoes"),
     ("Trainers",     "TN", "shoes"),
-    ("Sleeping Bag", "SL", "none"),
-    ("Backpack",     "BP", "none"),
     ("Hat",          "HT", "none"),
 ]:
     cat, created = Category.objects.get_or_create(
@@ -47,6 +45,8 @@ for name, code, size_type in [
 print("Setting up special request categories...")
 
 for name, code, extra_field in [
+    ("Backpack",     "BP", "none"),
+    ("Sleeping Bag", "SL", "none"),
     ("Tent",         "TE", "none"),
     ("Mobile Phone", "PH", "device_code"),
     ("SIM Card",     "SI", "sim_number"),
