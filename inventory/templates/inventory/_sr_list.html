@@ -36,14 +36,18 @@
         </form>
         {% endif %}
     </div>
-    {% if sr.requested_by == request.user %}
-    <div class="mt-2 pt-2 border-top">
-        <button class="btn btn-sm btn-outline-danger w-100"
+    <div class="mt-2 pt-2 border-top d-flex gap-2">
+        <a href="{% url 'view_special_request' sr.id %}?next=/inventory/volunteer/?tab=special"
+           class="btn btn-sm btn-outline-primary flex-grow-1">
+            View
+        </a>
+        {% if sr.requested_by == request.user %}
+        <button class="btn btn-sm btn-outline-danger flex-grow-1"
                 onclick="confirmCancelSR({{ sr.id }}, '{{ sr.person|escapejs }}', '{{ sr.category.name|escapejs }}')">
-            Cancel this request
+            Cancel
         </button>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 {% empty %}
 <p class="text-muted text-center py-3">No active special requests{% if sr_search %} matching "{{ sr_search }}"{% endif %}.</p>

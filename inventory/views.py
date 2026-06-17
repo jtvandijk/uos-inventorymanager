@@ -812,6 +812,14 @@ def admin_special_requests_view(request):
 
 
 @login_required
+def view_special_request(request, sr_id):
+    sr = get_object_or_404(SpecialRequest, id=sr_id)
+    next_url = request.GET.get("next") or "/inventory/volunteer/?tab=special"
+    context = {"sr": sr, "next": next_url}
+    return render(request, "inventory/view_special_request.html", add_role_context(request, context))
+
+
+@login_required
 def confirm_special_request(request, sr_id):
     sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
     next_url = request.POST.get("next") or request.GET.get("next") or "/inventory/volunteer/"
