@@ -28,6 +28,7 @@ from .views import (
     approve_user,
     reject_user,
     delete_user,
+    activity_log_view,
 )
 
 
@@ -85,4 +86,5 @@ urlpatterns = [
     path("users/<int:user_id>/approve/", approve_user, name="approve_user"),
     path("users/<int:user_id>/reject/", reject_user, name="reject_user"),
     path("users/<int:user_id>/delete/", delete_user, name="delete_user"),
+    path("activity/", activity_log_view, name="activity_log"),
 ]

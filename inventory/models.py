@@ -348,6 +348,37 @@ class SpecialRequest(models.Model):
 
 
 # ---------------------------
+# Activity Log
+# ---------------------------
+
+class ActivityLog(models.Model):
+    ACTION_CHOICES = [
+        ("reserve", "Reserved item"),
+        ("edit_reservation", "Edited reservation"),
+        ("cancel_reservation", "Cancelled reservation"),
+        ("collect", "Collected item"),
+        ("reassign", "Re-assigned item"),
+        ("new_sr", "New special request"),
+        ("confirm_sr", "Confirmed special request"),
+        ("cancel_sr", "Cancelled special request"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="activity_logs")
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    item_code = models.CharField(max_length=20, blank=True)
+    person = models.CharField(max_length=100, blank=True)
+    route_name = models.CharField(max_length=100, blank=True)
+    detail = models.CharField(max_length=200, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return f"{self.user} — {self.action} @ {self.timestamp:%Y-%m-%d %H:%M}"
+
+
+# ---------------------------
 # User Profile
 # ---------------------------
 

@@ -9,7 +9,7 @@ from django.contrib import messages
 
 from django.contrib.auth.models import User
 
-from .models import Category, SizeOption, Item, Reservation, Route, SpecialRequest, UserProfile
+from .models import ActivityLog, Category, SizeOption, Item, Reservation, Route, SpecialRequest, UserProfile
 from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, SignUpForm
 
 import re
@@ -29,6 +29,17 @@ def add_role_context(request, context):
     if admin:
         context["pending_count"] = User.objects.filter(is_active=False).count()
     return context
+
+
+def _log(user, action, item=None, item_code="", person="", route=None, detail=""):
+    ActivityLog.objects.create(
+        user=user,
+        action=action,
+        item_code=item.code if item else item_code,
+        person=person,
+        route_name=route.name if route else "",
+        detail=detail,
+    )
 
 
 # ---------------------------
@@ -240,6 +251,7 @@ def reserve_item(request, item_id):
             item.updated_at = timezone.now()
             item.save()
 
+            _log(request.user, "reserve", item=item, person=reservation.person, route=reservation.route)
             messages.success(request, f"Item {item.code} reserved successfully")
 
             return redirect(next_url)
@@ -270,6 +282,7 @@ def edit_reservation(request, reservation_id):
         form = ReservationForm(request.POST, instance=reservation)
         if form.is_valid():
             form.save()
+            _log(request.user, "edit_reservation", item=item, person=reservation.person, route=reservation.route)
             messages.success(request, f"Reservation for {reservation.person} updated.")
             from django.urls import reverse
             from urllib.parse import quote
@@ -298,6 +311,9 @@ def cancel_reservation(request, item_id):
     if reservation and (
         reservation.reserved_by == request.user or is_admin(request.user)
     ):
+        _log_person = reservation.person
+        _log_route = reservation.route
+        _log_code = item.code
         if item.category.is_special:
             sr = SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled").first()
             if sr:
@@ -308,6 +324,7 @@ def cancel_reservation(request, item_id):
         reservation.delete()  # sets item → available via model override
         if item.category.is_special:
             _try_auto_assign_special(item, by_user=request.user, note_reason="cancellation")
+        _log(request.user, "cancel_reservation", item_code=_log_code, person=_log_person, route=_log_route)
         messages.success(request, "Reservation cancelled.")
 
     return redirect(request.GET.get("next") or "/inventory/")
@@ -343,6 +360,10 @@ def collect_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
     if item.status in ("reserved", "packed"):
+        reservation = Reservation.objects.filter(
+            item=item, status__in=["reserved", "packed"]
+        ).select_related("route").first()
+
         # Use QuerySet.update() to bypass Reservation.delete() cascade (would set item→available)
         # Keeping the reservation preserves person's name for the Collected view
         Reservation.objects.filter(
@@ -356,6 +377,9 @@ def collect_item(request, item_id):
         item.updated_at = timezone.now()
         item.save()
 
+        _log(request.user, "collect", item=item,
+             person=reservation.person if reservation else "",
+             route=reservation.route if reservation else None)
         messages.success(request, f"Item {item.code} collected.")
 
     return redirect(request.GET.get("next", "/inventory/"))
@@ -482,6 +506,8 @@ def reassign_item(request, item_id):
         item.updated_at = timezone.now()
         item.save()
 
+        _log(request.user, "reassign", item=item, person=person, route=reservation.route,
+             detail=f"Replaced by {replacement.code}")
         messages.success(
             request,
             f"Re-assigned to {replacement.code}. {person}'s reservation moved with collection date {original_date}.",
@@ -522,6 +548,8 @@ def reassign_item(request, item_id):
                     request,
                     f"{item.category.name} given on walk. {person}'s special request returned to the queue — will be assigned when one becomes available.",
                 )
+            _log(request.user, "reassign", item=item, person=person, route=reservation.route,
+                 detail=f"SR returned to queue — {item.category.name}")
         else:
             # Regular item: item is definitively gone, log immediately as missed
             miss_note = f"Item {item.code} given to another person on {timezone.now().date()} — no replacement available."
@@ -532,6 +560,8 @@ def reassign_item(request, item_id):
                 missed_at=timezone.now(),
                 notes=new_notes,
             )
+            _log(request.user, "reassign", item=item, person=person, route=reservation.route,
+                 detail="No replacement available")
             messages.warning(
                 request,
                 f"No replacement in stock. {person}'s reservation has been logged in Missed Collections.",
@@ -694,6 +724,7 @@ def create_special_request(request):
             sr = form.save(commit=False)
             sr.requested_by = request.user
             sr.save()
+            _log(request.user, "new_sr", person=sr.person, route=sr.route, detail=sr.category.name)
             available_item = Item.objects.filter(category=sr.category, status="available").first()
             if available_item:
                 assigned_req = _try_auto_assign_special(available_item, by_user=request.user)
@@ -765,6 +796,7 @@ def confirm_special_request(request, sr_id):
     sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
     next_url = request.POST.get("next") or request.GET.get("next") or "/inventory/volunteer/"
     SpecialRequest.objects.filter(pk=sr.pk).update(last_confirmed_at=timezone.now())
+    _log(request.user, "confirm_sr", person=sr.person, route=sr.route, detail=sr.category.name)
     messages.success(request, f"Confirmed {sr.person}'s request is still active. 4-week clock reset.")
     return redirect(next_url)
 
@@ -779,6 +811,7 @@ def cancel_special_request(request, sr_id):
         status="lapsed",
         lapsed_at=timezone.now(),
     )
+    _log(request.user, "cancel_sr", person=sr.person, route=sr.route, detail=sr.category.name)
     messages.success(request, f"Special request for {sr.person} ({sr.category.name}) cancelled.")
     return redirect(next_url)
 
@@ -940,3 +973,23 @@ def delete_user(request, user_id):
         return redirect("users")
     User.objects.filter(pk=user_id, is_superuser=False).exclude(pk=request.user.pk).delete()
     return redirect("users")
+
+
+# ---------------------------
+# Activity Log
+# ---------------------------
+
+@login_required
+def activity_log_view(request):
+    if not is_admin(request.user):
+        return redirect("volunteer")
+
+    logs = ActivityLog.objects.select_related("user").all()
+    paginator = Paginator(logs, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    elided_range = list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
+
+    return render(request, "inventory/activity_log.html", add_role_context(request, {
+        "page_obj": page_obj,
+        "elided_range": elided_range,
+    }))
