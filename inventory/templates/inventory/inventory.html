@@ -89,10 +89,10 @@
         <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
             <span class="text-muted small">Filter:</span>
             <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'available' %}btn-success{% else %}btn-outline-secondary{% endif %}" data-status="available">Available</button>
+            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'special' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="special">Special</button>
             <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'reserved' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="reserved">Reserved</button>
             <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'packed' %}btn-primary{% else %}btn-outline-secondary{% endif %}" data-status="packed">Packed</button>
             <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'given' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" data-status="given">Collected</button>
-            <button type="button" class="btn btn-sm status-pill {% if request.GET.status == 'special' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" data-status="special">Special</button>
 
             <!--
             <div class="vr d-none d-sm-block"></div>
@@ -229,7 +229,7 @@
         </td>
 
         <td>
-            <a href="{% url 'view_item' item.id %}?next=/inventory/&{{ request.GET.urlencode }}"
+            <a href="{% url 'view_item' item.id %}?next={{ request.get_full_path|urlencode }}"
                class="btn btn-primary btn-sm">
                 View
             </a>

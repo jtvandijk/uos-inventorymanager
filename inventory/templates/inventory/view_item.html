@@ -33,7 +33,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2 class="mb-0">Item Details</h2>
                     {% if is_admin %}
-                    <a href="{% url 'edit_item' item.id %}?next={{ next }}"
+                    <a href="{% url 'edit_item' item.id %}?next={{ next|urlencode }}"
                        class="btn btn-outline-secondary btn-sm">
                         Edit
                     </a>
@@ -133,21 +133,21 @@
                 {% url 'view_item' item.id as item_url %}
                 {% if item.status == "available" %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'reserve_item' item.id %}?next={{ item_url }}?next={{ next }}"
+                    <a href="{% url 'reserve_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
                        class="btn btn-success">
                         Reserve
                     </a>
                 </div>
                 {% elif item.status == "reserved" and is_admin %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next }}"
+                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
                        class="btn btn-primary">
                         Mark as Packed
                     </a>
                 </div>
                 {% elif item.status == "packed" and is_admin %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next }}"
+                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
                        class="btn btn-outline-primary">
                         Mark as Unpacked
                     </a>
@@ -160,7 +160,7 @@
                 <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
                     <h2 class="mb-0">Reservation Details</h2>
                     {% if is_admin or reservation.reserved_by == request.user %}
-                    <a href="{% url 'edit_reservation' reservation.id %}?next={{ next }}"
+                    <a href="{% url 'edit_reservation' reservation.id %}?next={{ next|urlencode }}"
                        class="btn btn-outline-secondary btn-sm">
                         Edit
                     </a>
@@ -222,7 +222,7 @@
                         Cancel Reservation
                     </button>
                     {% endif %}
-                    <a href="{% url 'collect_item' item.id %}?next={{ item_url }}?next={{ next }}"
+                    <a href="{% url 'collect_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
                        class="btn btn-secondary">
                         Item Collected
                     </a>
@@ -282,7 +282,7 @@
 
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="{% url 'reassign_item' item.id %}?next={{ next }}"
+                <a href="{% url 'reassign_item' item.id %}?next={{ next|urlencode }}"
                    class="btn btn-dark">
                     {% if replacement_available %}Re-assign{% else %}Confirm{% endif %}
                 </a>
@@ -315,7 +315,7 @@
                 <button class="btn btn-secondary" data-bs-dismiss="modal">
                     Keep Reservation
                 </button>
-                <a href="{% url 'cancel_reservation' item.id %}?next={{ item_url }}?next={{ next }}"
+                <a href="{% url 'cancel_reservation' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
                    class="btn btn-warning">
                     Yes, Cancel It
                 </a>
