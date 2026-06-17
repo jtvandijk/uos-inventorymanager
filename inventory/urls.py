@@ -24,9 +24,10 @@ from .views import (
     confirm_special_request,
     cancel_special_request,
     signup_view,
-    pending_users_view,
+    users_view,
     approve_user,
     reject_user,
+    delete_user,
 )
 
 
@@ -80,7 +81,8 @@ urlpatterns = [
     # Sign-up & User Approval
     # ---------------------------
     path("signup/", signup_view, name="signup"),
-    path("users/pending/", pending_users_view, name="pending_users"),
+    path("users/", users_view, name="users"),
     path("users/<int:user_id>/approve/", approve_user, name="approve_user"),
     path("users/<int:user_id>/reject/", reject_user, name="reject_user"),
+    path("users/<int:user_id>/delete/", delete_user, name="delete_user"),
 ]

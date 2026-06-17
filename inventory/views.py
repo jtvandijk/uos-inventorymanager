@@ -9,7 +9,7 @@ from django.contrib import messages
 
 from django.contrib.auth.models import User
 
-from .models import Category, SizeOption, Item, Reservation, Route, SpecialRequest
+from .models import Category, SizeOption, Item, Reservation, Route, SpecialRequest, UserProfile
 from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, SignUpForm
 
 import re
@@ -884,8 +884,12 @@ def signup_view(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
+            user.first_name = form.cleaned_data.get("first_name", "")
+            user.last_name = form.cleaned_data.get("last_name", "")
+            user.email = form.cleaned_data.get("email", "")
             user.is_active = False
             user.save()
+            UserProfile.objects.create(user=user, phone=form.cleaned_data.get("phone", ""))
             return render(request, "inventory/signup.html", {"success": True})
     else:
         form = SignUpForm()
@@ -894,24 +898,45 @@ def signup_view(request):
 
 
 @login_required
-def pending_users_view(request):
+def users_view(request):
     if not is_admin(request.user):
         return redirect("volunteer")
-    pending = User.objects.filter(is_active=False).order_by("date_joined")
-    return render(request, "inventory/pending_users.html", add_role_context(request, {"pending": pending}))
+
+    users_qs = User.objects.prefetch_related("groups").order_by("username")
+    paginator = Paginator(users_qs, 15)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    elided_range = list(paginator.get_elided_page_range(page_obj.number, on_each_side=2, on_ends=1))
+
+    phone_map = {p.user_id: p.phone for p in UserProfile.objects.filter(user__in=page_obj.object_list)}
+    for u in page_obj.object_list:
+        u.is_admin_flag = u.groups.filter(name="Admin").exists()
+        u.phone_num = phone_map.get(u.pk, "")
+
+    return render(request, "inventory/users.html", add_role_context(request, {
+        "page_obj": page_obj,
+        "elided_range": elided_range,
+    }))
 
 
 @login_required
 def approve_user(request, user_id):
     if not is_admin(request.user) or request.method != "POST":
-        return redirect("pending_users")
+        return redirect("users")
     User.objects.filter(pk=user_id, is_active=False).update(is_active=True)
-    return redirect("pending_users")
+    return redirect("users")
 
 
 @login_required
 def reject_user(request, user_id):
     if not is_admin(request.user) or request.method != "POST":
-        return redirect("pending_users")
+        return redirect("users")
     User.objects.filter(pk=user_id, is_active=False, is_superuser=False).delete()
-    return redirect("pending_users")
+    return redirect("users")
+
+
+@login_required
+def delete_user(request, user_id):
+    if not is_admin(request.user) or request.method != "POST":
+        return redirect("users")
+    User.objects.filter(pk=user_id, is_superuser=False).exclude(pk=request.user.pk).delete()
+    return redirect("users")

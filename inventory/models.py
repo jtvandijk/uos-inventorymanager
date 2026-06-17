@@ -348,6 +348,18 @@ class SpecialRequest(models.Model):
 
 
 # ---------------------------
+# User Profile
+# ---------------------------
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    phone = models.CharField(max_length=20, blank=True, default="")
+
+    def __str__(self):
+        return f"{self.user.username} profile"
+
+
+# ---------------------------
 # Size Options
 # ---------------------------
 
