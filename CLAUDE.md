@@ -127,8 +127,8 @@ The `view_item` context pre-computes `replacement_available` (True/False) so the
 `/inventory/missed/` — admin-only, paginated (10/page), ordered by `-missed_at`.
 
 Stores reservations with `status="missed"`. Reasons:
-- `"lapsed"` — two consecutive missed collections (via `process_lapses`), including regular items displaced by reassign
-- `"no_replacement"` — special request item given to someone else, SR reverted to queue (via `reassign_item`)
+- `"lapsed"` — two consecutive missed collections (via `process_lapses`)
+- `"no_replacement"` — regular item given to someone else on the walk with no matching replacement in stock (via `reassign_item`)
 
 Missed reservations stay linked to their original item in the DB. New reservations can be created for the same item without conflict — `Reservation.clean()` only checks `status="reserved"`.
 
