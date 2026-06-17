@@ -21,8 +21,9 @@ Built and maintained by a solo volunteer. Keep solutions simple — no over-engi
 - Two roles: **Admin** (Django group named exactly `"Admin"`) and **Volunteer** (any authenticated non-admin user)
 - Permission check: `is_admin(user)` in `views.py` — checks `user.groups.filter(name="Admin")`
 - Always pass `is_admin` to templates via `add_role_context(request, context)`
+- `add_role_context` also injects `pending_count` (inactive user count) for admins — powers the red badge on the Users nav item across all admin pages
 - Volunteers: reserve items, edit any reservation, cancel their own reservations, mark items collected, re-assign, file/confirm/cancel special requests
-- Admins: everything, including pack/unpack, add/edit/delete items, run sheet, missed collections, special requests admin log
+- Admins: everything, including pack/unpack, add/edit/delete items, run sheet, missed collections, special requests admin log, user management, activity log
 
 ## Item workflow
 `available` → `reserved` → `packed` → `given` (displayed as "Collected")
@@ -205,6 +206,45 @@ my_res = Reservation.objects.filter(reserved_by=request.user, status="reserved"
 **Admin view:** `/inventory/special-requests/` — paginated (10/page), layout matches missed_collections (same header, logo, Beta badge). Filter pills: Active / Collected / Lapsed (no default highlighted; Clear appears when a filter is active). Default view (no pill active) shows active + assigned (fulfilled with item not yet given). Status column shows: Active (yellow) + optional "Confirmed" badge (green) if confirmed today; Assigned (blue, item reserved/packed); Collected (green, item given); Lapsed (grey) — all derived from `sr.status` + `sr.fulfilled_by_item.status` in the template, no extra model field needed. "Info" column in inventory shows yellow "Special" badge for `category.is_special` items.
 
 **Special filter pill** on inventory table: `?status=special` → `category__is_special=True` + excludes given.
+
+## User accounts
+
+Volunteers self-register at `/inventory/signup/` (no login required). Accounts are created with `is_active=False` and cannot log in until an admin approves them.
+
+**Sign-up form fields:** username (lowercase letters/numbers only, validated by `SignUpForm.clean_username()`), first name, last name, email, phone — all required. Password + confirm password via `UserCreationForm`.
+
+**`UserProfile` model** — OneToOne to `User`, stores `phone`:
+```python
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    phone = models.CharField(max_length=20, blank=True, default="")
+```
+Created immediately after user in `signup_view`. Existing users without a profile get an empty phone — access via `profile_phones = {p.user_id: p.phone for p in UserProfile.objects.filter(user__in=page_obj.object_list)}` in the view (avoids `RelatedObjectDoesNotExist`).
+
+**User management** (`/inventory/users/`) — admin-only. Lists all users paginated (15/page, numbered elided range). Columns: username, first/last name, email, phone, role badge (Admin/Volunteer/Pending). Actions: Approve + Reject for pending accounts; Delete (with modal) for any non-superuser except yourself.
+
+Admin accounts are created manually via Django admin (`/admin/`) and assigned to the `"Admin"` group. Sessions last 2 weeks by default (`SESSION_COOKIE_AGE`); no auto-logout configuration needed.
+
+## Activity log
+
+**`ActivityLog` model:**
+```python
+user = ForeignKey(User, on_delete=SET_NULL, null=True)
+action = CharField(max_length=20, choices=[...])  # see below
+item_code = CharField(max_length=20, blank=True)  # stored as string — survives item deletion
+person = CharField(max_length=100, blank=True)
+route_name = CharField(max_length=100, blank=True)  # stored as string — survives route deletion
+detail = CharField(max_length=200, blank=True)
+timestamp = DateTimeField(auto_now_add=True)
+```
+
+**Action choices:** `reserve`, `edit_reservation`, `cancel_reservation`, `collect`, `reassign`, `new_sr`, `confirm_sr`, `cancel_sr`.
+
+**Helper:** `_log(user, action, item=None, item_code="", person="", route=None, detail="")` in `views.py`. Pass `item` (FK object) or `item_code` (string); route as FK object (name extracted). Called directly in each relevant view after the action succeeds.
+
+**Not logged:** add item, auto-assign (system action), pack/unpack (admin prep action).
+
+**Admin view** (`/inventory/activity/`) — paginated (25/page, numbered elided range). Ordered by `-timestamp`. No filters — keep it simple.
 
 ## Test setup scripts
 

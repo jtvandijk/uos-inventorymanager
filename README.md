@@ -15,6 +15,8 @@ Built and maintained by a solo volunteer.
 - **Run sheet** — per-date, per-route picking list with AJAX pack toggling and print support
 - **Missed Collections** — admin log of reservations that lapsed or could not be re-assigned, for tracking patterns over time
 - **Two roles** — Admin (full access) and Volunteer (reserve, edit any reservation, cancel own reservations, mark collected, re-assign, file special requests)
+- **User accounts** — volunteers self-register at `/inventory/signup/` (username, full name, email, phone); accounts start inactive and require admin approval before login is possible. Admins created manually via Django admin. User management page lists all accounts with role badges and delete option.
+- **Activity log** — admin-only log of all volunteer street actions: reserve, edit reservation, cancel reservation, collect, re-assign, new special request, confirm SR, cancel SR. Shows user, timestamp, item code, person, route, and detail note.
 - **Search & filter** — volunteer view: search by item code, category, or person name; filter by status (Available / Reserved / Packed / Special); sortable columns; paginated
 - **Resource hub** — public `/resources/` page with volunteer guidelines, policies, and reference information (no login required)
 
@@ -37,6 +39,8 @@ python manage.py runserver
 ```
 
 Create an `Admin` group in Django admin and assign it to admin users. Non-admin authenticated users get the volunteer view.
+
+Volunteers register via `/inventory/signup/` — accounts require admin approval before they can log in. Admins approve or reject pending accounts from the **Users** page in the admin nav.
 
 ## Initial data setup
 
@@ -126,3 +130,5 @@ Nginx proxies to Gunicorn with `X-Forwarded-Proto` headers for HTTPS.
 | Run sheet | | ✓ |
 | Missed Collections log | | ✓ |
 | Special Requests admin log | | ✓ |
+| User management (approve / reject / delete) | | ✓ |
+| Activity log | | ✓ |
