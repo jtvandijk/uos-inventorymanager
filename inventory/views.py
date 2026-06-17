@@ -621,10 +621,15 @@ def edit_item(request, item_id):
     else:
         form = ItemEditForm(instance=item)
 
+    categories_data = {
+        str(cat.id): {"is_special": cat.is_special, "extra_field": cat.extra_field}
+        for cat in Category.objects.all()
+    }
     context = {
         "form": form,
         "item": item,
         "next": next_url,
+        "categories_data_json": json.dumps(categories_data),
     }
     return render(request, "inventory/edit_item.html", add_role_context(request, context))
 

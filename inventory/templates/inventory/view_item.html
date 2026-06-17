@@ -73,6 +73,18 @@
                         </td>
                     </tr>
 
+                    {% if item.category.extra_field == "device_code" %}
+                    <tr>
+                        <th>Device Code</th>
+                        <td class="font-monospace">{{ item.device_code|default:"—" }}</td>
+                    </tr>
+                    {% elif item.category.extra_field == "sim_number" %}
+                    <tr>
+                        <th>SIM Number</th>
+                        <td class="font-monospace">{{ item.sim_number|default:"—" }}</td>
+                    </tr>
+                    {% endif %}
+
                     <tr>
                         <th>Added</th>
                         <td>

@@ -132,12 +132,14 @@ class ItemForm(forms.ModelForm):
 class ItemEditForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ["category", "gender", "size"]
+        fields = ["category", "gender", "size", "device_code", "sim_number"]
 
         widgets = {
             "category": forms.Select(attrs={"class": "form-select"}),
             "gender": forms.Select(attrs={"class": "form-select"}),
             "size": forms.Select(attrs={"class": "form-select"}),
+            "device_code": forms.TextInput(attrs={"class": "form-control", "placeholder": "Model name and/or IMEI number"}),
+            "sim_number": forms.TextInput(attrs={"class": "form-control", "placeholder": "e.g. 07700 900123"}),
         }
 
 
