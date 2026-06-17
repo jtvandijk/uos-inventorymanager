@@ -221,6 +221,21 @@
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-muted small">Active special requests — press <strong>Still Active</strong> to confirm the person still needs the item and reset the 4-week clock.</span>
             </div>
+
+            <form method="get" class="mb-3">
+                <input type="hidden" name="tab" value="special">
+                <div class="input-group">
+                    <span class="input-group-text">🔍</span>
+                    <input type="text" name="q" value="{{ sr_search }}"
+                           class="form-control"
+                           placeholder="Search by name, category, or route…"
+                           autocomplete="off">
+                    {% if sr_search %}
+                    <a href="?tab=special" class="btn btn-outline-secondary">Clear</a>
+                    {% endif %}
+                </div>
+            </form>
+
             <a href="{% url 'create_special_request' %}?next=/inventory/volunteer/?tab=special"
                class="btn btn-warning btn-sm mb-3 w-100">
                 <i class="bi bi-plus-lg me-1"></i>New Special Request
@@ -282,7 +297,7 @@
                 <ul class="pagination pagination-sm mb-0">
                     {% if sr_page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link sr-page-link" href="?tab=special&sr_page={{ sr_page_obj.previous_page_number }}">&laquo; Prev</a>
+                        <a class="page-link sr-page-link" href="?tab=special&sr_page={{ sr_page_obj.previous_page_number }}{% if sr_search %}&q={{ sr_search|urlencode }}{% endif %}">&laquo; Prev</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">
@@ -294,7 +309,7 @@
                     </li>
                     {% if sr_page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link sr-page-link" href="?tab=special&sr_page={{ sr_page_obj.next_page_number }}">Next &raquo;</a>
+                        <a class="page-link sr-page-link" href="?tab=special&sr_page={{ sr_page_obj.next_page_number }}{% if sr_search %}&q={{ sr_search|urlencode }}{% endif %}">Next &raquo;</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">
@@ -394,6 +409,9 @@ function updateList(newStatus = null, page = 1) {
     const params = new URLSearchParams(window.location.search);
     const currentNext = params.get("next") || "/inventory/volunteer/";
 
+    params.delete("tab");
+    params.delete("sr_page");
+    params.delete("q");
     params.set("search", input.value);
     if (newStatus) params.set("status", newStatus);
     params.set("page", page);
