@@ -66,7 +66,7 @@ class ItemForm(forms.ModelForm):
         cleaned = super().clean()
         category = cleaned.get("category")
         if category:
-            if category.is_special:
+            if category.extra_field != "none":
                 cleaned["quantity"] = 1
             if category.extra_field == "device_code" and not cleaned.get("device_code"):
                 self.add_error("device_code", "Device code is required for this category.")
