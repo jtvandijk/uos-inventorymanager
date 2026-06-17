@@ -36,8 +36,6 @@ for name, code, size_type in [
     ("Sleeping Bag", "SL", "none"),
     ("Backpack",     "BP", "none"),
     ("Hat",          "HT", "none"),
-    ("Gloves",       "GL", "none"),
-    ("Socks",        "SK", "none"),
 ]:
     cat, created = Category.objects.get_or_create(
         name=name,

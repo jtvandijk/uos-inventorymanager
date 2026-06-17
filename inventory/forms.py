@@ -52,6 +52,16 @@ class ItemForm(forms.ModelForm):
             "size": forms.Select(attrs={"class": "form-select"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        regular = Category.objects.filter(is_special=False).order_by("name")
+        special = Category.objects.filter(is_special=True).order_by("name")
+        self.fields["category"].choices = [
+            ("", "— Select a category —"),
+            ("Regular Stock", [(c.pk, c.name) for c in regular]),
+            ("Special Request", [(c.pk, c.name) for c in special]),
+        ]
+
     def clean(self):
         cleaned = super().clean()
         category = cleaned.get("category")
