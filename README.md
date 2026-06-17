@@ -107,7 +107,7 @@ Nginx proxies to Gunicorn with `X-Forwarded-Proto` headers for HTTPS.
 - Server: Linode VPS at `178.79.153.239`
 - Domain: `uos-inventory.duckdns.org` (DuckDNS + Let's Encrypt)
 - After template/static changes: `python manage.py collectstatic`
-- After code changes: `sudo systemctl restart gunicorn`
+- After code changes: `sudo systemctl restart uos-inventory`
 
 ## Roles
 

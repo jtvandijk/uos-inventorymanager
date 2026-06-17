@@ -232,4 +232,4 @@ Creates 50 items: ~88% available, ~8% reserved, ~2% packed, ~2% collected.
 - `ALLOWED_HOSTS` needs bare hostname; `CSRF_TRUSTED_ORIGINS` needs scheme+hostname
 - `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')` — Nginx sets this header
 - After template/static changes: `python manage.py collectstatic`
-- Restart after code changes: `sudo systemctl restart gunicorn`
+- Restart after code changes: `sudo systemctl restart uos-inventory`
