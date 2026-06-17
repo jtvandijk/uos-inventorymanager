@@ -220,7 +220,7 @@
                         Cancel Reservation
                     </button>
                     {% endif %}
-                    <a href="{% url 'collect_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
+                    <a href="{% url 'collect_item' item.id %}?next={{ next|urlencode }}"
                        class="btn btn-secondary">
                         Item Collected
                     </a>
