@@ -86,7 +86,7 @@
                 </form>
 
                 <div class="text-center mt-3">
-                    <a href="{% url 'view_item' item.id %}?next={{ next }}" class="btn btn-outline-secondary">
+                    <a href="{% url 'view_item' item.id %}?next={{ next|urlencode }}" class="btn btn-outline-secondary">
                         Cancel
                     </a>
                 </div>

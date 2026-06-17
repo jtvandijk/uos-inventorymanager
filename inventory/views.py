@@ -267,7 +267,8 @@ def edit_reservation(request, reservation_id):
             form.save()
             messages.success(request, f"Reservation for {reservation.person} updated.")
             from django.urls import reverse
-            return redirect(f"{reverse('view_item', args=[item.id])}?next={next_url}")
+            from urllib.parse import quote
+            return redirect(f"{reverse('view_item', args=[item.id])}?next={quote(next_url, safe='')}")
     else:
         form = ReservationForm(instance=reservation)
 
