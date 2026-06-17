@@ -186,11 +186,11 @@
         <td>
             {% for res in item.reservation_set.all %}
                 {% if res.status == "reserved" or res.status == "packed" %}
+                <span class="d-inline-flex align-items-center gap-1 justify-content-center">
                     {{ res.reserved_for_date|date:"d M Y" }}
-                    {% if res.auto_extended %}
-                    <i class="bi bi-clock-history ms-1" style="color: #e67e22;"
+                    <i class="bi bi-clock-history" style="color: #e67e22; {% if not res.auto_extended %}visibility: hidden;{% endif %}"
                        title="Date was automatically pushed by 7 days after a missed collection"></i>
-                    {% endif %}
+                </span>
                 {% endif %}
             {% endfor %}
             {% if item.status == "available" %}
