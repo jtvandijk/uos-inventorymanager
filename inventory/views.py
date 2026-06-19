@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 
 from .models import ActivityLog, Category, SizeOption, Item, Reservation, Route, SpecialRequest, UserProfile
-from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, SignUpForm
+from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, SpecialRequestEditForm, SignUpForm
 
 import re
 
@@ -653,8 +653,9 @@ def volunteer_view(request):
     status_filter = request.GET.get("status", "available")
     search = request.GET.get("search", "")
 
+    status_values = ["reserved", "packed"] if status_filter == "reserved" else [status_filter]
     items = Item.objects.filter(
-        status=status_filter
+        status__in=status_values
     ).select_related("category").prefetch_related("reservation_set")
 
     if search:
@@ -817,6 +818,25 @@ def view_special_request(request, sr_id):
     next_url = request.GET.get("next") or "/inventory/volunteer/?tab=special"
     context = {"sr": sr, "next": next_url}
     return render(request, "inventory/view_special_request.html", add_role_context(request, context))
+
+
+@login_required
+def edit_special_request(request, sr_id):
+    from urllib.parse import quote
+    sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
+    next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/volunteer/?tab=special"
+    if sr.requested_by != request.user and not is_admin(request.user):
+        return redirect(next_url)
+    if request.method == "POST":
+        form = SpecialRequestEditForm(request.POST, instance=sr)
+        if form.is_valid():
+            form.save()
+            sr_url = reverse("view_special_request", args=[sr_id])
+            return redirect(f"{sr_url}?next={quote(next_url, safe='')}")
+    else:
+        form = SpecialRequestEditForm(instance=sr)
+    context = {"form": form, "sr": sr, "next": next_url}
+    return render(request, "inventory/edit_special_request.html", add_role_context(request, context))
 
 
 @login_required

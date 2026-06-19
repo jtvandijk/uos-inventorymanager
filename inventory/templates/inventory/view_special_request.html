@@ -26,7 +26,13 @@
                     {% endfor %}
                 {% endif %}
 
-                <h2 class="mb-4">Special Request</h2>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Special Request</h2>
+                    {% if sr.status == "active" and (sr.requested_by == request.user or is_admin) %}
+                    <a href="{% url 'edit_special_request' sr.id %}?next={{ next|urlencode }}"
+                       class="btn btn-outline-secondary btn-sm">Edit</a>
+                    {% endif %}
+                </div>
 
                 <table class="table table-bordered mb-3">
                     <colgroup>

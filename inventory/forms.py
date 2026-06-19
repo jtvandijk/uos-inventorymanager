@@ -199,3 +199,22 @@ class SpecialRequestForm(forms.ModelForm):
         self.fields["route"].empty_label = "— Select a route —"
         self.fields["route"].required = True
         self.fields["notes"].required = False
+
+
+class SpecialRequestEditForm(forms.ModelForm):
+    class Meta:
+        model = SpecialRequest
+        fields = ["person", "route", "notes"]
+
+        widgets = {
+            "person": forms.TextInput(attrs={"class": "form-control"}),
+            "route": forms.Select(attrs={"class": "form-select"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["route"].queryset = Route.objects.all()
+        self.fields["route"].empty_label = "— Select a route —"
+        self.fields["route"].required = True
+        self.fields["notes"].required = False
