@@ -73,16 +73,16 @@
                 Inventory
             </button>
 
-            <button id="btnReserved"
-                class="btn {% if status_filter == 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
-                onclick="showTab('items'); changeStatus('reserved')">
-                Reserved
-            </button>
-
             <button id="btnToday"
                 class="btn btn-outline-primary"
                 onclick="showTab('today')">
                 Today
+            </button>
+
+            <button id="btnReserved"
+                class="btn {% if status_filter == 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                onclick="showTab('items'); changeStatus('reserved')">
+                Reserved
             </button>
 
             <button id="btnSpecial"
