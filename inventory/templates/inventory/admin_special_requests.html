@@ -81,15 +81,12 @@
     <!-- Status filter pills -->
     <div class="d-flex flex-wrap gap-1 mb-3">
         <span class="text-muted small me-1 align-self-center">Filter:</span>
-        <a href="?status=active"
+        <a href="{% if status_filter == 'active' %}{% url 'admin_special_requests' %}{% else %}?status=active{% endif %}"
            class="btn btn-sm {% if status_filter == 'active' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}">Active</a>
-        <a href="?status=collected"
+        <a href="{% if status_filter == 'collected' %}{% url 'admin_special_requests' %}{% else %}?status=collected{% endif %}"
            class="btn btn-sm {% if status_filter == 'collected' %}btn-success{% else %}btn-outline-secondary{% endif %}">Collected</a>
-        <a href="?status=lapsed"
+        <a href="{% if status_filter == 'lapsed' %}{% url 'admin_special_requests' %}{% else %}?status=lapsed{% endif %}"
            class="btn btn-sm {% if status_filter == 'lapsed' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Lapsed</a>
-        {% if status_filter %}
-        <a href="{% url 'admin_special_requests' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
-        {% endif %}
     </div>
 
     <!-- Table -->

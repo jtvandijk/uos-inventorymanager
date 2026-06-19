@@ -70,13 +70,10 @@
     <!-- Filter pills -->
     <div class="d-flex flex-wrap gap-1 mb-3">
         <span class="text-muted small me-1 align-self-center">Filter:</span>
-        <a href="?reason=lapsed&sort={{ sort }}"
+        <a href="{% if reason_filter == 'lapsed' %}{% url 'missed_collections' %}{% else %}?reason=lapsed&sort={{ sort }}{% endif %}"
            class="btn btn-sm {% if reason_filter == 'lapsed' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Lapsed</a>
-        <a href="?reason=no_replacement&sort={{ sort }}"
+        <a href="{% if reason_filter == 'no_replacement' %}{% url 'missed_collections' %}{% else %}?reason=no_replacement&sort={{ sort }}{% endif %}"
            class="btn btn-sm {% if reason_filter == 'no_replacement' %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}">No Replacement</a>
-        {% if reason_filter %}
-        <a href="{% url 'missed_collections' %}" class="btn btn-outline-secondary btn-sm">Clear</a>
-        {% endif %}
     </div>
 
     <div class="table-responsive">
