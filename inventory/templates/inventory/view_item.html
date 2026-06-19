@@ -160,7 +160,7 @@
                 {% elif item.status == "packed" and is_admin %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
                     <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
-                       class="btn btn-outline-primary">
+                       class="btn btn-primary">
                         Mark as Unpacked
                     </a>
                 </div>
