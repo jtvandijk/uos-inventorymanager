@@ -13,6 +13,7 @@ from .views import (
     add_item_confirm,
     cancel_reservation,
     pack_item,
+    pack_all_items,
     collect_item,
     view_item,
     get_next_code,
@@ -81,6 +82,7 @@ urlpatterns = [
     # Run Sheet
     # ---------------------------
     path("run-sheet/", run_sheet_view, name="run_sheet"),
+    path("pack-all/", pack_all_items, name="pack_all_items"),
 
     # ---------------------------
     # Sign-up & User Approval

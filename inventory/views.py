@@ -356,6 +356,38 @@ def pack_item(request, item_id):
 
 
 @login_required
+def pack_all_items(request):
+    if not is_admin(request.user):
+        return redirect("volunteer")
+    if request.method != "POST":
+        return redirect("run_sheet")
+
+    from datetime import date as date_type
+    date_str = request.POST.get("date", "")
+    route_id = request.POST.get("route_id", "")
+
+    try:
+        target_date = date_type.fromisoformat(date_str)
+    except ValueError:
+        return redirect("run_sheet")
+
+    action = request.POST.get("action", "pack")
+    target_status = "packed" if action == "pack" else "reserved"
+    source_status = "reserved" if action == "pack" else "packed"
+
+    qs = Reservation.objects.filter(reserved_for_date=target_date, status=source_status)
+    if route_id:
+        qs = qs.filter(route_id=route_id)
+
+    item_ids = list(qs.values_list("item_id", flat=True))
+    qs.update(status=target_status)
+    Item.objects.filter(id__in=item_ids).update(status=target_status)
+
+    next_url = f"/inventory/run-sheet/?date={date_str}&route={route_id}"
+    return redirect(next_url)
+
+
+@login_required
 def collect_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
@@ -656,7 +688,7 @@ def volunteer_view(request):
     status_values = ["reserved", "packed"] if status_filter == "reserved" else [status_filter]
     items = Item.objects.filter(
         status__in=status_values
-    ).select_related("category").prefetch_related("reservation_set")
+    ).select_related("category").prefetch_related("reservation_set", "reservation_set__route")
 
     if search:
         # Allow volunteers to find items by category, ID, or the name on a reservation
@@ -672,7 +704,8 @@ def volunteer_view(request):
 
     sr_search = request.GET.get("q", "")
     sr_qs = SpecialRequest.objects.filter(
-        status="active",
+        Q(status="active") |
+        Q(status="fulfilled", fulfilled_by_item__status__in=["reserved", "packed"])
     ).select_related("category", "route", "requested_by").order_by("requested_at")
     if sr_search:
         sr_qs = sr_qs.filter(
@@ -700,19 +733,35 @@ def volunteer_view(request):
 
     my_res = Reservation.objects.filter(
         reserved_by=request.user,
-        status="reserved",
-    ).exclude(item__fulfilled_special_request__status="fulfilled")
+        status__in=["reserved", "packed"],
+    ).exclude(item__fulfilled_special_request__status="fulfilled").select_related("route", "item__category")
 
     res_page_obj = Paginator(my_res.order_by("-id"), 3).get_page(
         request.GET.get("res_page")
     )
 
-    # Fulfilled SRs whose collection date is today — shown so volunteers can collect
-    sr_fulfilled_qs = SpecialRequest.objects.filter(
+    my_srs_qs = SpecialRequest.objects.filter(
+        requested_by=request.user,
+    ).filter(
+        Q(status="active") |
+        Q(status="fulfilled", fulfilled_by_item__status__in=["reserved", "packed"])
+    ).select_related("category", "route").order_by("requested_at")
+    my_sr_page_obj = Paginator(my_srs_qs, 3).get_page(request.GET.get("my_sr_page"))
+
+    today = timezone.localdate()
+    today_reservations = Reservation.objects.filter(
+        reserved_for_date=today,
+        status__in=["reserved", "packed"],
+    ).exclude(
+        item__fulfilled_special_request__status="fulfilled"
+    ).select_related("item__category", "route").order_by("route__name", "person")
+
+    today_srs = SpecialRequest.objects.filter(
         status="fulfilled",
-        fulfilled_by_item__reservation__reserved_for_date=timezone.localdate(),
-        fulfilled_by_item__reservation__status__in=["reserved", "packed"],
-    ).select_related("category", "route", "requested_by", "fulfilled_by_item").order_by("fulfilled_at")
+        fulfilled_by_item__status__in=["reserved", "packed"],
+        fulfilled_by_item__reservation__reserved_for_date=today,
+    ).select_related("category", "route", "fulfilled_by_item").order_by("route__name", "person")
+
     context = {
         "page_obj": page_obj,
         "my_reservations": res_page_obj,
@@ -721,7 +770,9 @@ def volunteer_view(request):
         "status_filter": status_filter,
         "sr_page_obj": sr_page_obj,
         "sr_search": sr_search,
-        "sr_fulfilled": sr_fulfilled_qs,
+        "my_srs": my_sr_page_obj,
+        "today_reservations": today_reservations,
+        "today_srs": today_srs,
     }
 
     return render(
@@ -883,6 +934,8 @@ def run_sheet_view(request):
     reservations = None
     selected_date = None
     selected_route = None
+    to_pack_count = 0
+    packed_count = 0
 
     if date_str:
         try:
@@ -899,6 +952,8 @@ def run_sheet_view(request):
                 selected_route = routes.filter(id=route_id).first()
 
             reservations = qs
+            to_pack_count = qs.filter(status="reserved").count()
+            packed_count = qs.filter(status="packed").count()
         except ValueError:
             pass
 
@@ -909,6 +964,8 @@ def run_sheet_view(request):
         "selected_route": selected_route,
         "date_str": date_str,
         "route_id": route_id,
+        "to_pack_count": to_pack_count,
+        "packed_count": packed_count,
     }
 
     return render(

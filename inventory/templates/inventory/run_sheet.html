@@ -161,9 +161,27 @@
                 {% endif %}
             </div>
             {% if reservations %}
-            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm no-print">
-                Print
-            </button>
+            <div class="d-flex gap-2 no-print">
+                <form method="post" action="{% url 'pack_all_items' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="date" value="{{ date_str }}">
+                    <input type="hidden" name="route_id" value="{{ route_id }}">
+                    {% if to_pack_count > 0 %}
+                    <input type="hidden" name="action" value="pack">
+                    <button type="submit" class="btn btn-success btn-sm">
+                        Pack {{ to_pack_count }} item{{ to_pack_count|pluralize }}
+                    </button>
+                    {% else %}
+                    <input type="hidden" name="action" value="unpack">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">
+                        Unpack {{ packed_count }} item{{ packed_count|pluralize }}
+                    </button>
+                    {% endif %}
+                </form>
+                <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                    Print
+                </button>
+            </div>
             {% endif %}
         </div>
 

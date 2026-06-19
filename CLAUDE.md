@@ -197,16 +197,41 @@ Pass 2 — re-assign available special items to next in queue (FIFO by `requeste
 
 **`view_special_request`** (`/inventory/special-request/<id>/`) — detail page for any SR, accessible to all logged-in users. Shows person, category, route, status, dates, notes, assigned item link. For active SRs: Still Active button (any volunteer) and Cancel Request button (requester or admin, modal-confirmed) right-aligned above a Back button on the left — same layout as `view_item`. Cancel redirects to `?next` param.
 
-**Volunteer view:** 3rd toggle tab "Requests" alongside Available/Reserved. Shows all active SR cards with a single View button each (links to `view_special_request`). A "Today's collections" section above shows fulfilled SRs with `reserved_for_date` today — packed/unpacked visual distinction and a View button to go to `view_item`.
+**Volunteer view tabs:** Four tabs — **Inventory** (available stock), **Reserved** (reserved + packed items), **Today** (everything due for collection today's walk), **Requests** (SR queue). The Requests tab button is yellow (`btn-warning`); the others use blue (`btn-primary`). Tab switching is JS-driven (`showTab()`); Inventory/Reserved use AJAX for the item list; Today and Requests are server-rendered.
 
-SR list is AJAX-paginated via `_sr_list.html` partial (same pattern as `_item_list.html` for items). Pagination uses `<button onclick="updateSRList(N)">` — not `<a href>` links. Do NOT add per-SR cancel modals to the partial — they get wiped on every AJAX refresh. Cancel lives on `view_special_request` instead.
+**Today tab:** Shows regular reservations and SR assignments due today, split into two sections (Reservations / Special requests), each sorted by route then person. SR-assigned items are excluded from the Reservations section (appear only in Special requests). Empty state: "No collections scheduled for today." Back-navigation from `view_item` returns to `?tab=today`.
 
-My Reservations (top of volunteer page) excludes items auto-assigned via special request:
 ```python
-my_res = Reservation.objects.filter(reserved_by=request.user, status="reserved"
+today_reservations = Reservation.objects.filter(
+    reserved_for_date=today, status__in=["reserved","packed"]
+).exclude(item__fulfilled_special_request__status="fulfilled")
+
+today_srs = SpecialRequest.objects.filter(
+    status="fulfilled",
+    fulfilled_by_item__status__in=["reserved","packed"],
+    fulfilled_by_item__reservation__reserved_for_date=today,
+)
+```
+
+**SR list (Requests tab):** Shows active + assigned SRs (fulfilled with item not yet given) — not just active. Cards show Active (yellow) or Assigned (blue) badge. Last-confirmed date only shown for active SRs. AJAX-paginated via `_sr_list.html` partial. Pagination uses `<button onclick="updateSRList(N)">` — not `<a href>` links. Do NOT add per-SR cancel modals to the partial — they get wiped on every AJAX refresh. Cancel lives on `view_special_request` instead.
+
+```python
+sr_qs = SpecialRequest.objects.filter(
+    Q(status="active") |
+    Q(status="fulfilled", fulfilled_by_item__status__in=["reserved","packed"])
+)
+```
+
+**My Reservations** (shown below Reserved tab, hidden on other tabs): includes reserved + packed items, shows route badge and Packed ✓ badge. Excludes SR auto-assigns. Pagination links include `?status=reserved` so page reloads restore the correct tab.
+
+```python
+my_res = Reservation.objects.filter(
+    reserved_by=request.user, status__in=["reserved","packed"]
 ).exclude(item__fulfilled_special_request__status="fulfilled")
 ```
 `fulfilled_special_request` is the `related_name` on `SpecialRequest.fulfilled_by_item`.
+
+**My Requests** (shown at bottom of Requests tab, server-rendered, paginated 3/page): shows the logged-in user's own active + assigned SRs. Active shows yellow badge; Assigned shows blue badge. Pagination links include `?tab=special` so reloads restore the Requests tab.
 
 **Admin view:** `/inventory/special-requests/` — paginated (10/page), layout matches missed_collections (same header, logo, Beta badge). Filter pills: Active / Collected / Lapsed (no default highlighted; Clear appears when a filter is active). Default view (no pill active) shows active + assigned (fulfilled with item not yet given). Status column shows: Active (yellow) + optional "Confirmed" badge (green) if confirmed today; Assigned (blue, item reserved/packed); Collected (green, item given); Lapsed (grey) — all derived from `sr.status` + `sr.fulfilled_by_item.status` in the template, no extra model field needed. "Info" column in inventory shows yellow "Special" badge for `category.is_special` items.
 
@@ -250,6 +275,22 @@ timestamp = DateTimeField(auto_now_add=True)
 **Not logged:** add item, auto-assign (system action), pack/unpack (admin prep action).
 
 **Admin view** (`/inventory/activity/`) — paginated (25/page, numbered elided range). Ordered by `-timestamp`. No filters — keep it simple.
+
+## Run sheet
+
+`/inventory/run-sheet/` — admin-only. Filter by date + route (optional). Shows all reserved + packed items for that date as a table with individual Pack/Packed ✓ toggle buttons (AJAX via `pack_item`).
+
+**Pack all / Unpack all button:** Appears whenever the run sheet has results. Shows "Pack N item(s)" when any items are unpacked; switches to "Unpack N item(s)" when all are packed. POSTs to `pack_all_items` view with `action=pack` or `action=unpack`. Uses `QuerySet.update()` on both Reservation and Item directly (same bypass-cascade pattern as lapse system) — does not call `Reservation.save()`.
+
+```python
+# pack_all_items view — POST only, admin only
+qs = Reservation.objects.filter(reserved_for_date=target_date, status=source_status)
+if route_id:
+    qs = qs.filter(route_id=route_id)
+item_ids = list(qs.values_list("item_id", flat=True))
+qs.update(status=target_status)
+Item.objects.filter(id__in=item_ids).update(status=target_status)
+```
 
 ## Test setup scripts
 

@@ -67,16 +67,22 @@
         <!-- Toggle -->
         <div class="btn-group mb-3 w-100">
 
-            <button id="btnAvailable"
+            <button id="btnInventory"
                 class="btn {% if status_filter != 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
                 onclick="showTab('items'); changeStatus('available')">
-                Available
+                Inventory
             </button>
 
             <button id="btnReserved"
                 class="btn {% if status_filter == 'reserved' %}btn-primary{% else %}btn-outline-primary{% endif %}"
                 onclick="showTab('items'); changeStatus('reserved')">
                 Reserved
+            </button>
+
+            <button id="btnToday"
+                class="btn btn-outline-primary"
+                onclick="showTab('today')">
+                Today
             </button>
 
             <button id="btnSpecial"
@@ -105,46 +111,82 @@
             {% include "inventory/_item_list.html" %}
         </div>
 
-        <!-- Special Requests List (hidden by default) -->
-        <div id="specialList" style="display:none;">
+        <!-- Today Tab (hidden by default) -->
+        <div id="todayList" style="display:none;">
 
-            {% if sr_fulfilled %}
-            <div class="mb-3">
-                <div class="text-muted small mb-2"><strong>Today's collections</strong> — items assigned for today's outreach.</div>
-                {% for sr in sr_fulfilled %}
-                <div class="card p-3 mb-2 shadow-sm {% if sr.fulfilled_by_item.status == 'packed' %}border-primary{% else %}border-warning{% endif %}">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <div class="flex-grow-1">
-                            <div class="fw-semibold">{{ sr.person }}</div>
-                            <span class="badge bg-primary mb-1">{{ sr.category.name }}</span>
-                            {% if sr.route %}
-                            <span class="badge ms-1 mb-1"
-                                  style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
-                                {{ sr.route.name }}
-                            </span>
-                            {% endif %}
-                            {% if sr.fulfilled_by_item %}
-                            <div class="small mt-1 font-monospace text-muted">{{ sr.fulfilled_by_item.code }}
-                                {% if sr.fulfilled_by_item.status == "packed" %}
-                                <span class="badge bg-success ms-1">Packed ✓</span>
-                                {% else %}
-                                <span class="badge bg-warning text-dark ms-1">Not packed yet</span>
-                                {% endif %}
-                            </div>
-                            {% endif %}
+            {% if today_reservations or today_srs %}
+
+            {% if today_reservations %}
+            <h6 class="text-muted fw-semibold mb-2">Reservations</h6>
+            {% for res in today_reservations %}
+            <div class="card p-3 mb-2 shadow-sm">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">{{ res.person }}</div>
+                        <span class="badge bg-light text-dark border mb-1">{{ res.item.category.name }}</span>
+                        {% if res.item.gender != "unisex" %}
+                        <span class="badge bg-secondary mb-1">{{ res.item.get_gender_display }}</span>
+                        {% endif %}
+                        {% if res.status == "packed" %}
+                        <span class="badge bg-primary mb-1">Packed ✓</span>
+                        {% endif %}
+                        {% if res.route %}
+                        <span class="badge mb-1"
+                              style="background-color: {{ res.route.color }}; color: {{ res.route.text_color }};">
+                            {{ res.route.name }}
+                        </span>
+                        {% endif %}
+                        <div class="text-muted small mt-1">
+                            <span class="fw-semibold">ID:</span> {{ res.item.code }}
+                            {% if res.item.size and res.item.size != "N/A" %}· <span class="fw-semibold">Size:</span> {{ res.item.get_size_label }}{% endif %}
                         </div>
+                    </div>
+                    <a href="{% url 'view_item' res.item.id %}?next=/inventory/volunteer/?tab=today"
+                       class="btn btn-primary px-3 py-2 flex-shrink-0">View</a>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% if today_srs %}
+            {% if today_reservations %}<hr class="my-3">{% endif %}
+            <h6 class="text-muted fw-semibold mb-2">Special requests</h6>
+            {% for sr in today_srs %}
+            <div class="card p-3 mb-2 shadow-sm">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">{{ sr.person }}</div>
+                        <span class="badge bg-warning text-dark mb-1">{{ sr.category.name }}</span>
+                        {% if sr.fulfilled_by_item.status == "packed" %}
+                        <span class="badge bg-primary mb-1">Packed ✓</span>
+                        {% endif %}
+                        {% if sr.route %}
+                        <span class="badge mb-1"
+                              style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
+                            {{ sr.route.name }}
+                        </span>
+                        {% endif %}
                         {% if sr.fulfilled_by_item %}
-                        <a href="{% url 'view_item' sr.fulfilled_by_item.id %}?next=/inventory/volunteer/?tab=special"
-                           class="btn btn-sm {% if sr.fulfilled_by_item.status == 'packed' %}btn-primary{% else %}btn-outline-warning{% endif %} flex-shrink-0">
-                            View
-                        </a>
+                        <div class="text-muted small mt-1 font-monospace">{{ sr.fulfilled_by_item.code }}</div>
                         {% endif %}
                     </div>
+                    {% if sr.fulfilled_by_item %}
+                    <a href="{% url 'view_item' sr.fulfilled_by_item.id %}?next=/inventory/volunteer/?tab=today"
+                       class="btn btn-primary px-3 py-2 flex-shrink-0">View</a>
+                    {% endif %}
                 </div>
-                {% endfor %}
             </div>
-            <hr class="my-3">
+            {% endfor %}
             {% endif %}
+
+            {% else %}
+            <p class="text-muted text-center py-4">No collections scheduled for today.</p>
+            {% endif %}
+
+        </div>
+
+        <!-- Special Requests List (hidden by default) -->
+        <div id="specialList" style="display:none;">
 
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-muted small">Special requests lapse automatically after 4 weeks — press <strong>Still Active</strong> to confirm the person still needs the item and keep the request in the queue.</span>
@@ -168,9 +210,68 @@
             <div id="srList">
             {% include "inventory/_sr_list.html" %}
             </div>
+
+            <hr class="my-3">
+
+            <h5 class="mb-2">My Requests</h5>
+            {% for sr in my_srs %}
+            <div class="card p-3 mb-2 shadow-sm">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">{{ sr.person }}</div>
+                        <span class="badge bg-warning text-dark mb-1">{{ sr.category.name }}</span>
+                        {% if sr.status == "fulfilled" %}
+                        <span class="badge bg-primary mb-1">Assigned</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark mb-1">Active</span>
+                        {% endif %}
+                        {% if sr.route %}
+                        <span class="badge ms-1 mb-1"
+                              style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
+                            {{ sr.route.name }}
+                        </span>
+                        {% endif %}
+                        <div class="text-muted small mt-1">Requested: {{ sr.requested_at|date:"d M Y" }}</div>
+                    </div>
+                    <a href="{% url 'view_special_request' sr.id %}?next=/inventory/volunteer/?tab=special"
+                       class="btn btn-primary px-3 py-2 flex-shrink-0">View</a>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">No active requests filed by you</p>
+            {% endfor %}
+
+            <div class="d-flex justify-content-center mt-2 mb-1">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if my_srs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?tab=special&my_sr_page={{ my_srs.previous_page_number }}">&laquo; Prev</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo; Prev</span>
+                    </li>
+                    {% endif %}
+                    <li class="page-item disabled">
+                        <span class="page-link">{{ my_srs.number }} / {{ my_srs.paginator.num_pages }}</span>
+                    </li>
+                    {% if my_srs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?tab=special&my_sr_page={{ my_srs.next_page_number }}">Next &raquo;</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next &raquo;</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+
         </div>
 
-        <!-- My Reservations -->
+        <!-- My Reservations (shown only when Reserved tab is active) -->
+        <div id="myReservations" style="display:none;">
+
         <h5 class="mt-4 mb-2">My Reservations</h5>
 
         {% for r in my_reservations %}
@@ -182,6 +283,17 @@
 
                     {% if r.item.gender != "unisex" %}
                     <span class="badge bg-secondary mb-1">{{ r.item.get_gender_display }}</span>
+                    {% endif %}
+
+                    {% if r.status == "packed" %}
+                    <span class="badge bg-primary mb-1">Packed ✓</span>
+                    {% endif %}
+
+                    {% if r.route %}
+                    <span class="badge mb-1"
+                          style="background-color: {{ r.route.color }}; color: {{ r.route.text_color }};">
+                        {{ r.route.name }}
+                    </span>
                     {% endif %}
 
                     <div class="text-muted small">
@@ -200,7 +312,7 @@
                     </div>
                 </div>
 
-                <a href="{% url 'view_item' r.item.id %}?next=/inventory/volunteer/"
+                <a href="{% url 'view_item' r.item.id %}?next=/inventory/volunteer/?status=reserved"
                    class="btn btn-primary px-3 py-2 flex-shrink-0">
                     View
                 </a>
@@ -215,7 +327,7 @@
             <ul class="pagination pagination-sm mb-0">
                 {% if res_page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?res_page={{ res_page_obj.previous_page_number }}">&laquo; Prev</a>
+                    <a class="page-link" href="?status=reserved&res_page={{ res_page_obj.previous_page_number }}">&laquo; Prev</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
@@ -227,7 +339,7 @@
                 </li>
                 {% if res_page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?res_page={{ res_page_obj.next_page_number }}">Next &raquo;</a>
+                    <a class="page-link" href="?status=reserved&res_page={{ res_page_obj.next_page_number }}">Next &raquo;</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
@@ -236,6 +348,8 @@
                 {% endif %}
             </ul>
         </div>
+
+        </div><!-- /myReservations -->
 
     </div>
 </div>
@@ -252,26 +366,37 @@ let activeTab = "items";
 function showTab(tab) {
     activeTab = tab;
     const itemList = document.getElementById("itemList");
+    const todayList = document.getElementById("todayList");
     const specialList = document.getElementById("specialList");
     const searchForm = document.getElementById("searchForm");
-    const btnSpecial = document.getElementById("btnSpecial");
-    const btnAvailable = document.getElementById("btnAvailable");
+    const myRes = document.getElementById("myReservations");
+    const btnInventory = document.getElementById("btnInventory");
     const btnReserved = document.getElementById("btnReserved");
+    const btnToday = document.getElementById("btnToday");
+    const btnSpecial = document.getElementById("btnSpecial");
 
+    // Reset all panels and buttons
+    itemList.style.display = "none";
+    todayList.style.display = "none";
+    specialList.style.display = "none";
+    searchForm.style.display = "none";
+    if (myRes) myRes.style.display = "none";
+    btnInventory.classList.remove("btn-primary"); btnInventory.classList.add("btn-outline-primary");
+    btnReserved.classList.remove("btn-primary"); btnReserved.classList.add("btn-outline-primary");
+    btnToday.classList.remove("btn-primary"); btnToday.classList.add("btn-outline-primary");
+    btnSpecial.classList.replace("btn-warning", "btn-outline-warning");
+
+    // Activate selected tab
     if (tab === "special") {
-        itemList.style.display = "none";
         specialList.style.display = "block";
-        searchForm.style.display = "none";
         btnSpecial.classList.replace("btn-outline-warning", "btn-warning");
-        btnAvailable.classList.remove("btn-primary");
-        btnAvailable.classList.add("btn-outline-primary");
-        btnReserved.classList.remove("btn-primary");
-        btnReserved.classList.add("btn-outline-primary");
+    } else if (tab === "today") {
+        todayList.style.display = "block";
+        btnToday.classList.replace("btn-outline-primary", "btn-primary");
     } else {
         itemList.style.display = "block";
-        specialList.style.display = "none";
         searchForm.style.display = "block";
-        btnSpecial.classList.replace("btn-warning", "btn-outline-warning");
+        // Inventory/Reserved button state handled by updateToggleButtons
     }
 }
 
@@ -334,21 +459,19 @@ function changeStatus(status) {
 }
 
 function updateToggleButtons(status) {
-    const btnAvailable = document.getElementById("btnAvailable");
+    const btnInventory = document.getElementById("btnInventory");
     const btnReserved = document.getElementById("btnReserved");
+    const myRes = document.getElementById("myReservations");
 
-    btnAvailable.classList.remove("btn-primary");
-    btnReserved.classList.remove("btn-primary");
-
-    btnAvailable.classList.add("btn-outline-primary");
-    btnReserved.classList.add("btn-outline-primary");
+    btnInventory.classList.remove("btn-primary"); btnInventory.classList.add("btn-outline-primary");
+    btnReserved.classList.remove("btn-primary"); btnReserved.classList.add("btn-outline-primary");
 
     if (status === "reserved") {
-        btnReserved.classList.add("btn-primary");
-        btnReserved.classList.remove("btn-outline-primary");
+        btnReserved.classList.add("btn-primary"); btnReserved.classList.remove("btn-outline-primary");
+        if (myRes) myRes.style.display = "block";
     } else {
-        btnAvailable.classList.add("btn-primary");
-        btnAvailable.classList.remove("btn-outline-primary");
+        btnInventory.classList.add("btn-primary"); btnInventory.classList.remove("btn-outline-primary");
+        if (myRes) myRes.style.display = "none";
     }
 }
 
@@ -375,6 +498,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("tab") === "special") {
         showTab("special");
+    } else if (params.get("tab") === "today") {
+        showTab("today");
     } else {
         updateToggleButtons("{{ status_filter }}");
     }

@@ -1,10 +1,14 @@
-{% now "Y-m-d" as today_date %}
 {% for sr in sr_page_obj %}
 <div class="card p-3 mb-2 shadow-sm">
     <div class="d-flex justify-content-between align-items-start gap-2">
         <div class="flex-grow-1">
             <div class="fw-semibold">{{ sr.person }}</div>
             <span class="badge bg-warning text-dark mb-1">{{ sr.category.name }}</span>
+            {% if sr.status == "fulfilled" %}
+            <span class="badge bg-primary mb-1">Assigned</span>
+            {% else %}
+            <span class="badge bg-warning text-dark mb-1">Active</span>
+            {% endif %}
             {% if sr.route %}
             <span class="badge ms-1 mb-1"
                   style="background-color: {{ sr.route.color }}; color: {{ sr.route.text_color }};">
@@ -13,8 +17,7 @@
             {% endif %}
             <div class="text-muted small mt-1">
                 Requested: {{ sr.requested_at|date:"d M Y" }}
-                &nbsp;·&nbsp;
-                Last confirmed: {{ sr.last_confirmed_at|date:"d M Y" }}
+                {% if sr.status == "active" %}&nbsp;·&nbsp;Last confirmed: {{ sr.last_confirmed_at|date:"d M Y" }}{% endif %}
             </div>
             {% if sr.notes %}
             <div class="text-muted small fst-italic mt-1">{{ sr.notes }}</div>
@@ -25,7 +28,7 @@
     </div>
 </div>
 {% empty %}
-<p class="text-muted text-center py-3">No active special requests{% if sr_search %} matching "{{ sr_search }}"{% endif %}.</p>
+<p class="text-muted text-center py-3">No requests{% if sr_search %} matching "{{ sr_search }}"{% endif %}.</p>
 {% endfor %}
 
 {% if sr_page_obj.paginator.num_pages > 1 %}

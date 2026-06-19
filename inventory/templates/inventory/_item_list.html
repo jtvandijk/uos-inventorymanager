@@ -17,7 +17,7 @@
                     {% endif %}
 
                     {% if item.status == "packed" %}
-                    <span class="badge bg-success mb-1">Packed ✓</span>
+                    <span class="badge bg-primary mb-1">Packed ✓</span>
                     {% endif %}
 
                     <div class="text-muted small">
@@ -34,6 +34,12 @@
                     {% if status_filter == "reserved" %}
                         {% for res in item.reservation_set.all %}
                             {% if res.status == "reserved" or res.status == "packed" %}
+                            {% if res.route %}
+                            <span class="badge mb-1"
+                                  style="background-color: {{ res.route.color }}; color: {{ res.route.text_color }};">
+                                {{ res.route.name }}
+                            </span>
+                            {% endif %}
                             <div class="mt-1 pt-1 border-top text-muted small">
                                 <span class="fw-semibold">Reserved for:</span> {{ res.person }}<br>
                                 <span class="fw-semibold">Collection:</span> {{ res.reserved_for_date|date:"d M Y" }}
