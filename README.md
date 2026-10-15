@@ -93,12 +93,14 @@ python manage.py process_special_lapses
 Add both commands to crontab with `crontab -e`. Run `process_special_lapses` immediately after `process_lapses` so released items are re-queued in the same daily job:
 
 ```
-0 7 * * * /path/to/venv/bin/python /path/to/manage.py process_lapses >> /path/to/logs/lapses.log 2>&1 && /path/to/venv/bin/python /path/to/manage.py process_special_lapses >> /path/to/logs/lapses.log 2>&1
+0 7 * * * cd /home/justin/uos-inventorymanager && DJANGO_SETTINGS_MODULE=stockmanager.settings_prod venv/bin/python manage.py process_lapses >> lapses.log 2>&1 && DJANGO_SETTINGS_MODULE=stockmanager.settings_prod venv/bin/python manage.py process_special_lapses >> lapses.log 2>&1
 ```
 
-Adjust paths to match your server. Both commands are idempotent — safe to run multiple times on the same day.
+Cron doesn't load the service's environment, so `DJANGO_SETTINGS_MODULE` must be set in the line itself. Both commands are idempotent — safe to run multiple times on the same day.
 
 ## Production
+
+Deploy steps (pull, migrate, collectstatic, restart, rollback): see [docs/deploy.md](docs/deploy.md).
 
 Uses a separate `settings_prod.py`:
 
