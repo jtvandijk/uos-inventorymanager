@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from inventory.models import Item, Reservation
+from inventory.models import Item, Reservation, SpecialRequest
 
 
 class Command(BaseCommand):
@@ -28,6 +28,11 @@ class Command(BaseCommand):
                 miss_reason="lapsed",
                 missed_at=timezone.now(),
                 notes=new_notes,
+            )
+            # Release the SR too, otherwise process_special_lapses re-assigns the item and two SRs point at it
+            SpecialRequest.objects.filter(fulfilled_by_item_id=res.item_id, status="fulfilled").update(
+                status="lapsed",
+                lapsed_at=timezone.now(),
             )
             # Only release items not already given to someone else (e.g. via reassign with no replacement)
             Item.objects.filter(pk=res.item_id, status__in=["reserved", "packed"]).update(
