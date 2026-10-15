@@ -50,6 +50,9 @@ class Command(BaseCommand):
         ).select_related("item"):
             original_date = res.reserved_for_date
             new_date = original_date + timedelta(days=7)
+            # After downtime +7 can still be in the past; jump to the next same-weekday walk so the grace week is real
+            while new_date < today:
+                new_date += timedelta(days=7)
             extend_note = f"Automated update: not collected on {original_date}, pushed to {new_date}."
             new_notes = (res.notes + "\n" + extend_note) if res.notes else extend_note
 

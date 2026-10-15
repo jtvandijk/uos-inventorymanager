@@ -76,7 +76,7 @@ Pass 1 — second miss (release to stock):
 
 Pass 2 — first miss (extend by 7 days):
 - Finds reservations where `auto_extended=False` and `reserved_for_date < today` and status in `["reserved","packed"]`
-- Pushes `reserved_for_date` forward 7 days, sets `auto_extended=True`, appends note
+- Pushes `reserved_for_date` forward 7 days (repeating +7 until it is today or later, so after downtime the grace week still lands on a future same-weekday walk), sets `auto_extended=True`, appends note
 - Also uses `QuerySet.update()` to bypass `Reservation.save()` cascade
 
 **Why `QuerySet.update()` not `save()`:**
