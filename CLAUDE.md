@@ -314,13 +314,21 @@ qs.update(status=target_status)
 Item.objects.filter(id__in=item_ids).update(status=target_status)
 ```
 
+## Size options
+
+The size list is fixed in migration `0014_canonical_sizes.py` (`SIZES`): clothing XS–XXXL, trousers W28–W42 (every inch), shoes UK 3–UK 13. `Item.size` stores the value (`"L"`, `"32"`, `"7"`); templates show `item.get_size_label` (`"W32"`, `"UK 7"`) — never `item.size` directly. Size options are view-only in Django admin; to change the list, add a new data migration. Overview and filter chips order sizes by `SizeOption.id`, so recreate options in display order.
+
+## Checks
+
+`venv/bin/python scripts/checks/run.py` (or `--quick`) — run before pushing. Builds a throwaway DB (migrate + `seed_categories.py`), then runs `check_rules.py` (one check per rule), `check_redirects.py` (item page forms + Back), `check_stress.py` (random actions + consistency rules). When fixing a bug, add a check for it. See `docs/checks.md`.
+
 ## Test setup scripts
 
 **`seed_categories.py`** — run once (or re-run safely, uses `get_or_create`):
 ```bash
 python manage.py shell < seed_categories.py
 ```
-Creates 12 standard categories + 5 special-request categories (Backpack BP, Sleeping Bag SL, Tent TE, Mobile Phone PH, SIM Card SI) with 2-char codes, UK size options (clothing XS–XXXL, trousers 28–42" waist, shoes UK 3–13), and 7 routes with exact brand colours. Safe to re-run — uses `get_or_create` throughout.
+Creates 12 standard categories + 5 special-request categories (Backpack BP, Sleeping Bag SL, Tent TE, Mobile Phone PH, SIM Card SI) with 2-char codes, and 7 routes with exact brand colours. Size options come from migration 0014, not this script. Safe to re-run — uses `get_or_create` throughout.
 
 **`seed_data.py`** — wipes items and reservations only (preserves users, categories, routes, sizes):
 ```bash

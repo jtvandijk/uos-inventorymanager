@@ -86,8 +86,18 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(SizeOption)
 class SizeOptionAdmin(admin.ModelAdmin):
+    # View-only: the size list is fixed in migration 0014_canonical_sizes; change it there with a new migration
     list_display = ("value", "label", "size_type")
     list_filter = ("size_type",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # ---------------------------

@@ -142,7 +142,7 @@
 
         <td>
             {% if item.size and item.size != "N/A" %}
-                {{ item.size }}
+                {{ item.get_size_label }}
             {% else %}
                 <span class="text-muted">N/A</span>
             {% endif %}

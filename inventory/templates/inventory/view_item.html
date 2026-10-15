@@ -59,7 +59,7 @@
                         <th>Size</th>
                         <td>
                             {% if item.size and item.size != "N/A" %}
-                                {{ item.size }}
+                                {{ item.get_size_label }}
                             {% else %}
                                 <span class="text-muted">N/A</span>
                             {% endif %}
@@ -267,7 +267,7 @@
             <div class="modal-body">
                 {% if replacement_available %}
                     A matching <strong>{{ item.category.name }}</strong>
-                    ({{ item.get_gender_display }}, {{ item.size }}) is available in stock.<br><br>
+                    ({{ item.get_gender_display }}, {{ item.get_size_label }}) is available in stock.<br><br>
                     Re-assigning will move <strong>{{ reservation.person }}</strong>'s reservation
                     to the new item, keeping the same collection date.
                 {% elif item.category.is_special %}

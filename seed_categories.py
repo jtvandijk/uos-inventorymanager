@@ -1,23 +1,11 @@
-# Creates categories, UK size options, and routes.
+# Creates categories and routes.
 # Safe to run multiple times — uses get_or_create throughout.
 # Usage: python manage.py shell < seed_categories.py
 
 from inventory.models import Category, Item, SizeOption, Route
 from django.utils import timezone
 
-print("Setting up size options (UK sizes)...")
-
-# Clothing — UK standard label sizes
-for v in ["XS", "S", "M", "L", "XL", "XXL", "XXXL"]:
-    SizeOption.objects.get_or_create(size_type="clothing", value=v, defaults={"label": v})
-
-# Trousers — UK waist in inches
-for v in ["28", "30", "32", "34", "36", "38", "40", "42"]:
-    SizeOption.objects.get_or_create(size_type="trousers", value=v, defaults={"label": v})
-
-# Shoes — UK sizes (whole sizes)
-for v in ["3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"]:
-    SizeOption.objects.get_or_create(size_type="shoes", value=v, defaults={"label": v})
+# Size options come from migration 0014_canonical_sizes (run by `migrate`), not from here.
 
 print("Setting up categories...")
 

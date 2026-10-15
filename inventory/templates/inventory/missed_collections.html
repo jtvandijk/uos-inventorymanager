@@ -73,7 +73,7 @@
             <td>{{ res.item.get_gender_display }}</td>
             <td>
                 {% if res.item.size and res.item.size != "N/A" %}
-                    {{ res.item.size }}
+                    {{ res.item.get_size_label }}
                 {% else %}
                     <span class="text-muted">N/A</span>
                 {% endif %}

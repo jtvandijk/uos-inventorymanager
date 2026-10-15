@@ -1,6 +1,6 @@
 # Deploying changes to the server
 
-Run these after changes have been pushed to GitHub.
+Run these after changes have been pushed to GitHub. Before pushing, run the checks on your laptop: `venv/bin/python scripts/checks/run.py` (see [checks.md](checks.md)).
 
 Server: `justin@178.79.153.239` · app folder: `/home/justin/uos-inventorymanager` · service: `uos-inventory`
 
