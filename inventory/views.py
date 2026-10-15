@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from .models import ActivityLog, Category, SizeOption, Item, Reservation, Route, SpecialRequest, UserProfile
 from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, SpecialRequestEditForm, SignUpForm
 
+import json
 import re
 
 
@@ -474,7 +475,6 @@ def add_item(request):
     else:
         form = ItemForm()
 
-    import json
     categories_data = {
         str(cat.id): {"is_special": cat.is_special, "extra_field": cat.extra_field}
         for cat in Category.objects.all()
