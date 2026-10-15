@@ -8,16 +8,40 @@ _Snapshot of the shared Claude doc; edit the doc, not this file, and re-export i
 
 A web app, already built and running, that tracks donated or bought clothing and kit from the moment it arrives to the moment it is handed to someone on a walk. Volunteers use it on their phones, with nothing to install. I propose we agree the rules and a short data agreement, then try it on the Waterloo route (see Next steps).
 
+## What do we need?
+
+The first question is not which tool, but how we want to run outreach. Agree the list below, then check every option against it. If the commercial system UOS already pays for does all of this without workarounds, we should use it: the goal is a better experience for volunteers and the people we support, not this particular app.
+
+The test for any tool: does it fit how we work, or do we change how we work to fit it? Workarounds (a spreadsheet next to the system, a manual check someone has to remember) are where requests get lost and people wait longer than they should.
+
+| What we need | Why it matters | UOS app | Commercial system |
+| --- | --- | --- | --- |
+| Reserve an item for a named person, on a route, for a walk date | Volunteers promise items on the walk; the promise has to be recorded | Yes | Not yet checked |
+| Packing list per walk and route, ticked off as items are packed | Whoever packs needs one list, not a scroll through stock | Yes | Not yet checked |
+| See today's collections and mark items collected, on a phone | This happens on the street, often in the cold | Yes | Not yet checked |
+| Re-assign on the walk when an item goes to someone else | Happens every week; the original person must not be forgotten | Yes | Not yet checked |
+| Cancel a reservation, item straight back to stock | People's needs change | Yes | Not yet checked |
+| Missed collections: one grace week, then back to stock automatically | Stops items being held forever for people we no longer see | Yes | Not yet checked |
+| Fair queue for scarce items (phones, SIMs, tents, sleeping bags) | First come, first served, assigned automatically when stock arrives | Yes | Not yet checked |
+| Queue stays current: requests lapse unless confirmed every 4 weeks | No months-old requests nobody can vouch for | Yes | Not yet checked |
+| Quick filters by category, size and route | Finding a men's L coat in seconds, not minutes | Yes | Not yet checked |
+| Volunteer sign-up with admin approval; admin and volunteer roles | Only approved people see names of the people we support | Yes | Not yet checked |
+| Overview: stock, shortfall for scarce items, items handed out | Donor appeals and reports to funders | Yes | Not yet checked |
+| UOS controls the data and can change the rules | Data protection, and adapting as the service changes | Yes | Not yet checked |
+
+The last column is for whoever knows the commercial system best to fill in. "Workaround needed" means a manual step outside the system.
+
 ## Why it fits UOS
 
-Generic inventory tools count stock. This one tracks a specific item for a specific person on a specific walk, with rules built around how outreach actually works.
+The app was built around how the walks actually run, so everything in the list above is part of the design rather than added on afterwards.
 
-- **Reservations by person, route and date.** A volunteer meets someone on Monday and reserves a coat for next Monday's walk.
-- **Run sheet.** Whoever packs gets a per-walk list and ticks items off as they go in the bag.
-- **A grace week for missed collections.** First miss: the reservation moves to the same walk next week. Second miss: the item goes back to stock. Nothing sits reserved forever, and nobody loses out over one missed week.
-- **Re-assign on the walk.** If an item goes to someone else, the app finds an identical replacement or records the miss.
-- **Queue for scarce items** (tents, sleeping bags, backpacks, phones, SIMs). First come, first served; items are assigned automatically when stock arrives; requests lapse if not confirmed within 4 weeks.
-- **Accountability.** Activity log, missed-collections report, and volunteer sign-up with admin approval.
+- **Fair queues for scarce items.** Today someone can wait months for a phone while a newer request gets the one that happens to arrive. In the app, the person who has waited longest gets it automatically the moment it is added. Volunteers confirm every 4 weeks that the person still needs it, so the queue stays real.
+- **Demand you can show donors.** The Overview shows each scarce item's shortfall (e.g. "Phones: 6 waiting, 0 in stock"), which is a specific, ready-made appeal.
+- **Nothing slips through.** A missed collection gets one grace week, then the item returns to stock. If an item goes to someone else on the walk, the original person is moved to a replacement, put back in the queue, or recorded as missed. Every action is logged.
+- **Built for volunteers on a phone.** Filter by category, size and route in a tap; collection date and route fill themselves in; today's collections have their own tab.
+- **Numbers for funders and trustees.** Items handed out, people helped and the missed-collection rate, by month and year, without anyone counting.
+- **Changes in days, not contracts.** On 15 October, feedback on size lists, route filters and the admin start page was built, tested and live the same day.
+- **Tested.** More than 50 automated checks (queues, lapses, re-assigning, every button) run before every change.
 
 ## Cost and value
 

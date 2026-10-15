@@ -62,6 +62,15 @@ python manage.py shell < seed_data.py
 
 Creates 50 items with auto-generated codes and a realistic distribution (~88% available, ~8% reserved, ~2% packed, ~2% collected). User accounts are never touched.
 
+**Step 3 (optional) — demo scenarios** (run after steps 1 and 2):
+
+```bash
+python manage.py shell < seed_categories.py
+python manage.py shell < seed_demo.py
+```
+
+Adds a phone queue with nobody's phone in stock (add one as admin and it goes to the person waiting longest), sleeping bag and backpack queues, today's Waterloo walk, a grace-week reservation, and three months of history so the Overview's impact numbers aren't empty.
+
 ## Reservation lapse (automated)
 
 Reservations that are not collected are handled automatically by a daily management command:

@@ -339,6 +339,8 @@ python manage.py shell < seed_data.py
 ```
 Creates 50 items: ~88% available, ~8% reserved, ~2% packed, ~2% collected.
 
+**`seed_demo.py`** — run after `seed_data.py` + `seed_categories.py` to set up demo scenarios: phone queue (waiting 9 weeks / 3 weeks / 2 days, none in stock — add a phone live and it goes to the longest-waiting person), sleeping bag + backpack queues, today's Waterloo walk (3 collections, 1 packed), one grace-week reservation, and 3 months of handed-out/missed history for the impact numbers.
+
 ## Coding conventions
 - No comments unless the WHY is non-obvious
 - No over-engineering: don't add abstractions, error handling, or features beyond what's asked
