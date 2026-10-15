@@ -25,6 +25,16 @@
 </div>
 {% endif %}
 
+{% if route_chips and route_chips.routes %}
+<div class="chip-row mb-3">
+    {% for r in route_chips.routes %}
+    <button type="button" onclick="setChip('route', '{{ r.id }}')"
+            class="btn btn-sm rounded-pill{% if route_chips.route.id != r.id %} btn-outline-secondary{% endif %}"
+            {% if route_chips.route.id == r.id %}style="background-color: {{ r.color }}; color: {{ r.text_color }}; border-color: {{ r.color }};"{% endif %}>{{ r.name }}</button>
+    {% endfor %}
+</div>
+{% endif %}
+
 <div class="row g-2">
 
     {% for item in page_obj %}

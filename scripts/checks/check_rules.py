@@ -165,4 +165,18 @@ def run():
                                                     "reserved_for_date": in_days(2)})
     R.ok("editing a packed reservation keeps it packed", fresh(r).status == "packed" and fresh(r).person == "Ann B")
 
+    # Volunteer Reserved tab: route chips
+    from inventory.models import Route
+    reset_stock()
+    c1, c2 = add(coat, 2)
+    r1, r2 = Route.objects.order_by("id")[:2]
+    for it, rt, who in [(c1, r1, "Ann"), (c2, r2, "Bob")]:
+        V.post(f"/inventory/reserve/{it.id}/", {"person": who, "route": rt.id, "notes": "", "reserved_for_date": in_days(7)})
+    h = V.get("/inventory/volunteer/", {"status": "reserved"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest").json()["html"]
+    R.ok("route chips: one chip per route with reservations", h.count("setChip('route'") == 2)
+    h = V.get("/inventory/volunteer/", {"status": "reserved", "route": r1.id}, HTTP_X_REQUESTED_WITH="XMLHttpRequest").json()["html"]
+    R.ok("route chips: filters to that route", c1.code in h and c2.code not in h)
+    h = V.get("/inventory/volunteer/", {"status": "available"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest").json()["html"]
+    R.ok("route chips: not shown on the Inventory tab", "setChip('route'" not in h)
+
     return R

@@ -476,7 +476,7 @@ function changeStatus(status) {
 
 function clearChips() {
     const params = new URLSearchParams(window.location.search);
-    ["cat", "gender", "size"].forEach(k => params.delete(k));
+    ["cat", "gender", "size", "route"].forEach(k => params.delete(k));
     window.history.replaceState({}, "", "?" + params.toString());
 }
 

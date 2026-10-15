@@ -736,6 +736,15 @@ def _apply_chips(items, params):
     return items, chips
 
 
+def _apply_route_chips(items, params):
+    open_res = Reservation.objects.filter(item__in=items, status__in=["reserved", "packed"])
+    routes = Route.objects.filter(id__in=open_res.values("route_id")).order_by("name")
+    route = routes.filter(pk=params.get("route")).first() if params.get("route", "").isdigit() else None
+    if route:
+        items = items.filter(reservation__route=route, reservation__status__in=["reserved", "packed"]).distinct()
+    return items, {"routes": routes, "route": route}
+
+
 @login_required
 def volunteer_view(request):
 
@@ -756,9 +765,11 @@ def volunteer_view(request):
             Q(reservation__person__icontains=term)
         ).distinct()
 
-    chips = None
+    chips = route_chips = None
     if status_filter == "available":
         items, chips = _apply_chips(items, request.GET)
+    elif status_filter == "reserved":
+        items, route_chips = _apply_route_chips(items, request.GET)
 
     paginator = Paginator(items.order_by("code"), 5)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -791,7 +802,7 @@ def volunteer_view(request):
         else:
             html = render_to_string(
                 "inventory/_item_list.html",
-                {"page_obj": page_obj, "status_filter": status_filter, "special_match": special_match, "chips": chips},
+                {"page_obj": page_obj, "status_filter": status_filter, "special_match": special_match, "chips": chips, "route_chips": route_chips},
                 request=request,
             )
         return JsonResponse({"html": html})
@@ -835,6 +846,7 @@ def volunteer_view(request):
         "status_filter": status_filter,
         "special_match": special_match,
         "chips": chips,
+        "route_chips": route_chips,
         "sr_page_obj": sr_page_obj,
         "sr_search": sr_search,
         "my_srs": my_sr_page_obj,

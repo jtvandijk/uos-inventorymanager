@@ -297,7 +297,9 @@ timestamp = DateTimeField(auto_now_add=True)
 
 ## Volunteer filter chips
 
-Inventory tab only (`status=available`). `_apply_chips()` in views.py reads `cat`, `gender`, `size` GET params. Chips render at the top of `_item_list.html` and are recomputed on every AJAX refresh. Only in-stock options are listed. Picking a gender keeps unisex items. Changing category clears gender/size; switching to the Reserved tab clears all chips (`clearChips()`).
+Inventory tab only (`status=available`). `_apply_chips()` in views.py reads `cat`, `gender`, `size` GET params. Chips render at the top of `_item_list.html` and are recomputed on every AJAX refresh. Only in-stock options are listed. Picking a gender keeps unisex items. Changing category clears gender/size; switching tabs clears all chips (`clearChips()`).
+
+Reserved tab has **route chips** instead (`_apply_route_chips()`, GET param `route`): one per route with open reservations, active chip filled in the route's colour; filters the "All reservations" list.
 
 ## Run sheet
 
