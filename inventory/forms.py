@@ -1,5 +1,5 @@
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
@@ -168,7 +168,7 @@ class ReservationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if not self.instance.pk:
-            self.fields["reserved_for_date"].initial = date.today()
+            self.fields["reserved_for_date"].initial = date.today() + timedelta(days=7)
 
         self.fields["route"].queryset = Route.objects.all()
         self.fields["route"].empty_label = "— Select a route —"

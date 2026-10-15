@@ -42,6 +42,18 @@ def _log(user, action, item=None, item_code="", person="", route=None, detail=""
     )
 
 
+def _last_route_id(user):
+    # Most volunteers walk one route, so pre-select whichever they used last
+    candidates = [
+        (r.created_at, r.route_id)
+        for r in Reservation.objects.filter(reserved_by=user, route__isnull=False).order_by("-created_at")[:1]
+    ] + [
+        (s.requested_at, s.route_id)
+        for s in SpecialRequest.objects.filter(requested_by=user, route__isnull=False).order_by("-requested_at")[:1]
+    ]
+    return max(candidates)[1] if candidates else None
+
+
 # ---------------------------
 # Special Request Helpers
 # ---------------------------
@@ -240,8 +252,6 @@ def reserve_item(request, item_id):
         form = ReservationForm(request.POST)
 
         if form.is_valid():
-            Reservation.objects.filter(item=item).delete()
-
             reservation = form.save(commit=False)
             reservation.item = item
             reservation.reserved_by = request.user
@@ -256,7 +266,7 @@ def reserve_item(request, item_id):
 
             return redirect(next_url)
     else:
-        form = ReservationForm()
+        form = ReservationForm(initial={"route": _last_route_id(request.user)})
 
     context = {
         "form": form,
@@ -702,6 +712,10 @@ def volunteer_view(request):
     paginator = Paginator(items.order_by("code"), 3)
     page_obj = paginator.get_page(request.GET.get("page"))
 
+    special_match = None
+    if search and status_filter == "available" and not page_obj.object_list:
+        special_match = Category.objects.filter(is_special=True, name__icontains=search).first()
+
     sr_search = request.GET.get("q", "")
     sr_qs = SpecialRequest.objects.filter(
         Q(status="active") |
@@ -726,7 +740,7 @@ def volunteer_view(request):
         else:
             html = render_to_string(
                 "inventory/_item_list.html",
-                {"page_obj": page_obj, "status_filter": status_filter},
+                {"page_obj": page_obj, "status_filter": status_filter, "special_match": special_match},
                 request=request,
             )
         return JsonResponse({"html": html})
@@ -768,6 +782,7 @@ def volunteer_view(request):
         "res_page_obj": res_page_obj,
         "search": search,
         "status_filter": status_filter,
+        "special_match": special_match,
         "sr_page_obj": sr_page_obj,
         "sr_search": sr_search,
         "my_srs": my_sr_page_obj,
@@ -812,7 +827,10 @@ def create_special_request(request):
                 messages.success(request, f"Special request for {sr.person} ({sr.category.name}) added to the queue.")
             return redirect(next_url)
     else:
-        form = SpecialRequestForm()
+        form = SpecialRequestForm(initial={
+            "route": _last_route_id(request.user),
+            "category": request.GET.get("category"),
+        })
 
     context = {"form": form, "next": next_url}
     return render(request, "inventory/special_request.html", add_role_context(request, context))

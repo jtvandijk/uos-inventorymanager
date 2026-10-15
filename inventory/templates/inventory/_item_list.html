@@ -66,6 +66,12 @@
     {% empty %}
     <div class="col-12">
         <p class="text-muted mb-0">No items found</p>
+        {% if special_match %}
+        <a href="{% url 'create_special_request' %}?category={{ special_match.id }}&next=/inventory/volunteer/?tab=special"
+           class="btn btn-warning btn-sm mt-2 w-100">
+            <i class="bi bi-plus-lg me-1"></i>No {{ special_match.name|lower }} in stock — add a special request
+        </a>
+        {% endif %}
     </div>
     {% endfor %}
 
