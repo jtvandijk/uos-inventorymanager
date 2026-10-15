@@ -33,6 +33,16 @@ sudo systemctl status uos-inventory --no-pager    # should say "active (running)
 
 Then open https://uos-inventory.duckdns.org and click through the pages you changed.
 
+## Python packages
+
+`requirements.txt` pins the Django version so laptop and server match. After a pull that changes it:
+
+```bash
+pip install -r requirements.txt
+```
+
+**Never run `makemigrations` on the server.** Migrations are created on the laptop and pulled via git; files created on the server clash with them.
+
 ## Nginx
 
 Nginx doesn't need restarting for app changes. Only if its own config changed:

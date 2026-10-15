@@ -31,7 +31,7 @@ Built and maintained by a solo volunteer.
 ```bash
 python -m venv venv
 source venv/bin/activate
-pip install django pillow
+pip install -r requirements.txt
 
 python manage.py migrate
 python manage.py createsuperuser
