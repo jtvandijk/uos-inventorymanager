@@ -689,6 +689,36 @@ def delete_item(request, item_id):
 # Volunteer View (AJAX)
 # ---------------------------
 
+def _apply_chips(items, params):
+    # Only offer chips for what is in stock, so a tap never leads to an empty list
+    categories = Category.objects.filter(id__in=items.values("category_id")).order_by("name")
+    category = categories.filter(pk=params.get("cat")).first() if params.get("cat", "").isdigit() else None
+    gender = params.get("gender") if category else None
+    size = params.get("size") if category else None
+    genders, sizes = [], []
+
+    if category:
+        items = items.filter(category=category)
+        in_stock = set(items.values_list("gender", flat=True))
+        genders = [(g, label) for g, label in [("male", "Male"), ("female", "Female")] if g in in_stock]
+        # Unisex items fit either, so they stay in when a gender is picked
+        if gender in ("male", "female"):
+            items = items.filter(gender__in=[gender, "unisex"])
+        if category.size_type != "none":
+            stocked = set(items.values_list("size", flat=True))
+            sizes = list(SizeOption.objects.filter(
+                size_type=category.size_type, value__in=stocked
+            ).order_by("id").values_list("value", "label"))
+        if size:
+            items = items.filter(size=size)
+
+    chips = {
+        "categories": categories, "category": category, "genders": genders,
+        "gender": gender, "sizes": sizes, "size": size,
+    }
+    return items, chips
+
+
 @login_required
 def volunteer_view(request):
 
@@ -708,6 +738,10 @@ def volunteer_view(request):
             Q(size__iexact=term) |
             Q(reservation__person__icontains=term)
         ).distinct()
+
+    chips = None
+    if status_filter == "available":
+        items, chips = _apply_chips(items, request.GET)
 
     paginator = Paginator(items.order_by("code"), 10)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -740,7 +774,7 @@ def volunteer_view(request):
         else:
             html = render_to_string(
                 "inventory/_item_list.html",
-                {"page_obj": page_obj, "status_filter": status_filter, "special_match": special_match},
+                {"page_obj": page_obj, "status_filter": status_filter, "special_match": special_match, "chips": chips},
                 request=request,
             )
         return JsonResponse({"html": html})
@@ -783,6 +817,7 @@ def volunteer_view(request):
         "search": search,
         "status_filter": status_filter,
         "special_match": special_match,
+        "chips": chips,
         "sr_page_obj": sr_page_obj,
         "sr_search": sr_search,
         "my_srs": my_sr_page_obj,

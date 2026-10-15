@@ -1,3 +1,30 @@
+{% if chips %}
+<div class="mb-3">
+    <div class="chip-row">
+        {% for c in chips.categories %}
+        <button type="button" onclick="setChip('cat', '{{ c.id }}')"
+                class="btn btn-sm rounded-pill {% if chips.category.id == c.id %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ c.name }}</button>
+        {% endfor %}
+    </div>
+    {% if chips.genders %}
+    <div class="chip-row mt-2">
+        {% for value, label in chips.genders %}
+        <button type="button" onclick="setChip('gender', '{{ value }}')"
+                class="btn btn-sm rounded-pill {% if chips.gender == value %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ label }}</button>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if chips.sizes %}
+    <div class="chip-row mt-2">
+        {% for value, label in chips.sizes %}
+        <button type="button" onclick="setChip('size', '{{ value }}')"
+                class="btn btn-sm rounded-pill {% if chips.size == value %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ label }}</button>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
 <div class="row g-2">
 
     {% for item in page_obj %}

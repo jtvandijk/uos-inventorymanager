@@ -9,6 +9,15 @@
             max-width: 600px;
             margin: 0 auto;
         }
+        .chip-row {
+            display: flex;
+            gap: 0.4rem;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+        .chip-row .btn {
+            flex: 0 0 auto;
+        }
     </style>
 {% endblock %}
 
@@ -449,7 +458,30 @@ input.addEventListener("input", function() {
 
 // Toggle
 function changeStatus(status) {
+    clearChips();
     updateList(status, 1);
+}
+
+function clearChips() {
+    const params = new URLSearchParams(window.location.search);
+    ["cat", "gender", "size"].forEach(k => params.delete(k));
+    window.history.replaceState({}, "", "?" + params.toString());
+}
+
+// Tapping the active chip turns it off; a new category resets gender and size
+function setChip(key, value) {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get(key) === value) {
+        params.delete(key);
+    } else {
+        params.set(key, value);
+    }
+    if (key === "cat") {
+        params.delete("gender");
+        params.delete("size");
+    }
+    window.history.replaceState({}, "", "?" + params.toString());
+    updateList(null, 1);
 }
 
 function updateToggleButtons(status) {
