@@ -6,7 +6,8 @@ Manages clothing donations distributed across named outreach routes (Waterloo, K
 Built and maintained by a solo volunteer. Keep solutions simple — no over-engineering.
 
 ## Stack
-- Django 6, SQLite
+- Django 5.2 LTS (pinned in `requirements.txt`, security fixes until April 2028; next step is 6.2 LTS, together with a server OS upgrade — the server runs Ubuntu 22.04 / Python 3.10, which Django 6 doesn't support), SQLite
+- Never run `makemigrations` on the server; migrations are made on the laptop and pulled via git
 - Bootstrap 5.3.3 (CDN), Bootstrap Icons 1.11.3 (CDN)
 - Vanilla JS only — no build step, no npm
 - Nginx + Gunicorn in production
