@@ -91,4 +91,15 @@ def run():
     r = c.post(f"/inventory/delete/{it.id}/")
     R.ok("POST without CSRF token refused", r.status_code == 403 and Item.objects.filter(pk=it.pk).exists())
 
+    # Where people land after logging in
+    from django.test import Client
+    for name, admin, expected in [("chk_login_admin", True, "/inventory/overview/"), ("chk_login_vol", False, "/inventory/volunteer/")]:
+        u = user(name, admin=admin)
+        u.set_password("check-pass-123"); u.save()
+        lc = Client()
+        r = lc.post("/login/", {"username": name, "password": "check-pass-123"}, follow=True)
+        R.ok(f"login as {'admin' if admin else 'volunteer'} lands on {expected}", r.request["PATH_INFO"] == expected, r.request["PATH_INFO"])
+    r = client(user("chk_login_admin")).get("/", follow=True)
+    R.ok("site root takes an admin to the overview", r.request["PATH_INFO"] == "/inventory/overview/", r.request["PATH_INFO"])
+
     return R

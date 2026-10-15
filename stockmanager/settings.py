@@ -104,7 +104,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Users
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/inventory/'
+# Overview sends volunteers on to the volunteer view, so this suits both roles
+LOGIN_REDIRECT_URL = '/inventory/overview/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

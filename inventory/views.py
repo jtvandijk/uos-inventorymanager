@@ -1087,7 +1087,7 @@ def get_next_code(request):
 
 def signup_view(request):
     if request.user.is_authenticated:
-        return redirect("inventory" if is_admin(request.user) else "volunteer")
+        return redirect("overview" if is_admin(request.user) else "volunteer")
 
     if request.method == "POST":
         form = SignUpForm(request.POST)

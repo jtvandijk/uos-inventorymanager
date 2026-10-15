@@ -6,7 +6,7 @@ from inventory.forms import StyledLoginForm
 
 
 urlpatterns = [
-    path('', lambda request: redirect('/inventory/')),
+    path('', lambda request: redirect('/inventory/overview/')),
     path('admin/', admin.site.urls),
     path('inventory/', include('inventory.urls')),
     path('resources/', include('resources.urls')),
