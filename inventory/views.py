@@ -700,16 +700,16 @@ def volunteer_view(request):
         status__in=status_values
     ).select_related("category").prefetch_related("reservation_set", "reservation_set__route")
 
-    if search:
-        # Allow volunteers to find items by category, ID, or the name on a reservation
-        # (e.g. a client says "I reserved a sweater" — search their name directly)
+    # Each word must match something, so "coat L" finds size-L coats; size is exact so "L" doesn't match "XL"
+    for term in search.split():
         items = items.filter(
-            Q(category__name__icontains=search) |
-            Q(code__icontains=search) |
-            Q(reservation__person__icontains=search)
+            Q(category__name__icontains=term) |
+            Q(code__icontains=term) |
+            Q(size__iexact=term) |
+            Q(reservation__person__icontains=term)
         ).distinct()
 
-    paginator = Paginator(items.order_by("code"), 3)
+    paginator = Paginator(items.order_by("code"), 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
     special_match = None
