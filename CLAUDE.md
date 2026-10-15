@@ -225,7 +225,7 @@ today_srs = SpecialRequest.objects.filter(
 )
 ```
 
-**SR list (Requests tab):** Shows active + assigned SRs (fulfilled with item not yet given) — not just active. Cards show Active (yellow) or Assigned (blue) badge. Last-confirmed date only shown for active SRs. AJAX-paginated via `_sr_list.html` partial. Pagination uses `<button onclick="updateSRList(N)">` — not `<a href>` links. Do NOT add per-SR cancel modals to the partial — they get wiped on every AJAX refresh. Cancel lives on `view_special_request` instead.
+**SR list (Requests tab, 5/page):** Shows active + assigned SRs (fulfilled with item not yet given) — not just active. Cards show Active (yellow) or Assigned (blue) badge. Last-confirmed date only shown for active SRs. AJAX-paginated via `_sr_list.html` partial. Pagination uses `<button onclick="updateSRList(N)">` — not `<a href>` links. Do NOT add per-SR cancel modals to the partial — they get wiped on every AJAX refresh. Cancel lives on `view_special_request` instead.
 
 ```python
 sr_qs = SpecialRequest.objects.filter(
@@ -234,7 +234,7 @@ sr_qs = SpecialRequest.objects.filter(
 )
 ```
 
-**My Reservations** (shown below Reserved tab, hidden on other tabs): includes reserved + packed items, shows route badge and Packed ✓ badge. Excludes SR auto-assigns. Pagination links include `?status=reserved` so page reloads restore the correct tab.
+**My Reservations** (top of the Reserved tab, above the search, hidden on other tabs and when empty; 3/page, pager only when >1 page; followed by an "All reservations" heading): includes reserved + packed items, shows route badge and Packed ✓ badge. Excludes SR auto-assigns. Pagination links include `?status=reserved` so page reloads restore the correct tab.
 
 ```python
 my_res = Reservation.objects.filter(
@@ -243,7 +243,7 @@ my_res = Reservation.objects.filter(
 ```
 `fulfilled_special_request` is the `related_name` on `SpecialRequest.fulfilled_by_item`.
 
-**My Requests** (shown at bottom of Requests tab, server-rendered, paginated 3/page): shows the logged-in user's own active + assigned SRs. Active shows yellow badge; Assigned shows blue badge. Pagination links include `?tab=special` so reloads restore the Requests tab.
+**My Requests** (top of the Requests tab, under New Special Request, hidden when empty; server-rendered, 3/page, pager only when >1 page; followed by an "All requests" heading, then the SR search + list): shows the logged-in user's own active + assigned SRs. Active shows yellow badge; Assigned shows blue badge. Pagination links include `?tab=special` so reloads restore the Requests tab.
 
 **Admin view:** `/inventory/special-requests/` — paginated (10/page), layout matches missed_collections (same header, logo, Beta badge). Filter pills: Active / Collected / Lapsed (no default highlighted; Clear appears when a filter is active). Default view (no pill active) shows active + assigned (fulfilled with item not yet given). Status column shows: Active (yellow) + optional "Confirmed" badge (green) if confirmed today; Assigned (blue, item reserved/packed); Collected (green, item given); Lapsed (grey) — all derived from `sr.status` + `sr.fulfilled_by_item.status` in the template, no extra model field needed. "Info" column in inventory shows yellow "Special" badge for `category.is_special` items.
 

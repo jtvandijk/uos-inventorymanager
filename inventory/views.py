@@ -760,7 +760,7 @@ def volunteer_view(request):
     if status_filter == "available":
         items, chips = _apply_chips(items, request.GET)
 
-    paginator = Paginator(items.order_by("code"), 10)
+    paginator = Paginator(items.order_by("code"), 5)
     page_obj = paginator.get_page(request.GET.get("page"))
 
     special_match = None
@@ -778,7 +778,7 @@ def volunteer_view(request):
             Q(category__name__icontains=sr_search) |
             Q(route__name__icontains=sr_search)
         )
-    sr_paginator = Paginator(sr_qs, 3)
+    sr_paginator = Paginator(sr_qs, 5)
     sr_page_obj = sr_paginator.get_page(request.GET.get("sr_page"))
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
