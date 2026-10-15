@@ -54,8 +54,9 @@ On edit forms, pre-populate sizes on page load and pre-select the current value.
 Inventory list also shows messages. Other pages do not — don't assume messages show everywhere.
 
 ## Templates
-- No base template — each page is standalone with its own `<head>`
-- Bootstrap loaded from CDN on every page (not collected static)
+- All pages extend `inventory/templates/base.html` (blocks: `title`, `extra_head`, `content`); partials (`_item_list.html`, `_sr_list.html`) don't
+- `base.html` loads Bootstrap CSS + JS bundle and Bootstrap Icons from CDN (not collected static); the JS bundle is in `<head>` so inline page scripts can use `bootstrap`
+- Each page still has its own header markup (logo, title, Beta badge) inside `content`
 - Favicon: `{% static 'favicon.ico' %}` — Under One Sky branded
 - Logo: `{% static 'logo.png' %}` — transparent background PNG
 
