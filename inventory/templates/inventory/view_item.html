@@ -135,27 +135,26 @@
                 </table>
 
                 <!-- Item-level actions -->
-                {% url 'view_item' item.id as item_url %}
                 {% if item.status == "available" %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'reserve_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
+                    <a href="{% url 'reserve_item' item.id %}?next={{ return_here }}"
                        class="btn btn-success">
                         Reserve
                     </a>
                 </div>
                 {% elif item.status == "reserved" and is_admin %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
-                       class="btn btn-primary">
-                        Mark as Packed
-                    </a>
+                    <form method="post" action="{% url 'pack_item' item.id %}?next={{ return_here }}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Mark as Packed</button>
+                    </form>
                 </div>
                 {% elif item.status == "packed" and is_admin %}
                 <div class="d-flex justify-content-end mt-2 mb-2">
-                    <a href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
-                       class="btn btn-primary">
-                        Mark as Unpacked
-                    </a>
+                    <form method="post" action="{% url 'pack_item' item.id %}?next={{ return_here }}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Mark as Unpacked</button>
+                    </form>
                 </div>
                 {% endif %}
 
@@ -225,10 +224,10 @@
                         Cancel Reservation
                     </button>
                     {% endif %}
-                    <a href="{% url 'collect_item' item.id %}?next={{ next|urlencode }}"
-                       class="btn btn-secondary">
-                        Item Collected
-                    </a>
+                    <form method="post" action="{% url 'collect_item' item.id %}?next={{ next|urlencode }}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">Item Collected</button>
+                    </form>
                 </div>
                 {% endif %}
 
@@ -285,10 +284,10 @@
 
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="{% url 'reassign_item' item.id %}?next={{ next|urlencode }}"
-                   class="btn btn-dark">
-                    {% if replacement_available %}Re-assign{% else %}Confirm{% endif %}
-                </a>
+                <form method="post" action="{% url 'reassign_item' item.id %}?next={{ next|urlencode }}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-dark">{% if replacement_available %}Re-assign{% else %}Confirm{% endif %}</button>
+                </form>
             </div>
 
         </div>
@@ -318,10 +317,10 @@
                 <button class="btn btn-secondary" data-bs-dismiss="modal">
                     Keep Reservation
                 </button>
-                <a href="{% url 'cancel_reservation' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
-                   class="btn btn-warning">
-                    Yes, Cancel It
-                </a>
+                <form method="post" action="{% url 'cancel_reservation' item.id %}?next={{ return_here }}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning">Yes, Cancel It</button>
+                </form>
             </div>
 
         </div>
@@ -351,10 +350,10 @@
                     Cancel
                 </button>
 
-                <a href="{% url 'delete_item' item.id %}?{{ request.GET.urlencode }}"
-                   class="btn btn-danger">
-                    Delete
-                </a>
+                <form method="post" action="{% url 'delete_item' item.id %}?{{ request.GET.urlencode }}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
             </div>
 
         </div>

@@ -37,10 +37,13 @@ Category codes are 2-character uppercase strings. Never let users edit item code
 ## Key patterns
 
 **`next` parameter:** All action views accept a `?next=` param for redirect-after-action.
-On `view_item`, actions redirect back to view_item itself (preserving the original `next` for the Back button):
+On `view_item`, actions that should come back to the item page use `return_here` (built in the view: the item URL with the original `next`, URL-encoded as a whole so `&`s in `next` survive):
 ```
-href="{% url 'pack_item' item.id %}?next={{ item_url }}?next={{ next|urlencode }}"
+action="{% url 'pack_item' item.id %}?next={{ return_here }}"
 ```
+Never build the nested `?next=...?next=...` in the template — it only encodes once and drops everything after the first `&`.
+
+**State-changing actions are POST-only** (`@require_POST`): cancel_reservation, pack_item, collect_item, reassign_item, delete_item, confirm/cancel_special_request. In templates they are `<form method="post" action="...?next=...">` + `{% csrf_token %}` — keep `next` in the action's query string, since the views read `request.GET["next"]`. The run sheet pack toggle POSTs via `fetch` with the `X-CSRFToken` header.
 
 **AJAX detection:** Used in two places — run sheet (pack toggle) and volunteer view (item list + SR list).
 Check with `request.headers.get("x-requested-with") == "XMLHttpRequest"`.

@@ -6,6 +6,7 @@ from django.db.models.functions import Lower
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.contrib import messages
 
@@ -16,6 +17,7 @@ from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, 
 
 import json
 import re
+from urllib.parse import quote
 from datetime import datetime, time, timedelta
 
 
@@ -225,11 +227,14 @@ def view_item(request, item_id):
             status="available",
         ).exclude(id=item.id).exists()
 
+    # Actions on this page come back here; encode the whole URL so `&`s in next_url survive the round trip
+    here = f"{reverse('view_item', args=[item.id])}?next={quote(next_url, safe='')}"
     context = {
         "item": item,
         "reservation": reservation,
         "replacement_available": replacement_available,
         "next": next_url,
+        "return_here": quote(here, safe=""),
     }
 
     return render(
@@ -298,7 +303,6 @@ def edit_reservation(request, reservation_id):
             form.save()
             _log(request.user, "edit_reservation", item=item, person=reservation.person, route=reservation.route)
             messages.success(request, f"Reservation for {reservation.person} updated.")
-            from urllib.parse import quote
             return redirect(f"{reverse('view_item', args=[item.id])}?next={quote(next_url, safe='')}")
     else:
         form = ReservationForm(instance=reservation)
@@ -313,6 +317,7 @@ def edit_reservation(request, reservation_id):
 
 
 @login_required
+@require_POST
 def cancel_reservation(request, item_id):
     item = get_object_or_404(Item.objects.select_related("category"), id=item_id)
 
@@ -344,6 +349,7 @@ def cancel_reservation(request, item_id):
 
 
 @login_required
+@require_POST
 def pack_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
     next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/"
@@ -401,6 +407,7 @@ def pack_all_items(request):
 
 
 @login_required
+@require_POST
 def collect_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
 
@@ -504,6 +511,7 @@ def add_item_confirm(request):
 
 
 @login_required
+@require_POST
 def reassign_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
     next_url = request.GET.get("next") or "/inventory/"
@@ -556,7 +564,6 @@ def reassign_item(request, item_id):
             request,
             f"Re-assigned to {replacement.code}. {person}'s reservation moved with collection date {original_date}.",
         )
-        from urllib.parse import quote
         return redirect(f"{reverse('view_item', args=[replacement.id])}?next={quote(next_url, safe='')}")
 
     else:
@@ -678,6 +685,7 @@ def edit_item(request, item_id):
 
 @user_passes_test(is_admin)
 @login_required
+@require_POST
 def delete_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
     category = item.category
@@ -935,7 +943,6 @@ def view_special_request(request, sr_id):
 
 @login_required
 def edit_special_request(request, sr_id):
-    from urllib.parse import quote
     sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
     next_url = request.GET.get("next") or request.POST.get("next") or "/inventory/volunteer/?tab=special"
     if sr.requested_by != request.user and not is_admin(request.user):
@@ -953,6 +960,7 @@ def edit_special_request(request, sr_id):
 
 
 @login_required
+@require_POST
 def confirm_special_request(request, sr_id):
     sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
     next_url = request.POST.get("next") or request.GET.get("next") or "/inventory/volunteer/"
@@ -963,6 +971,7 @@ def confirm_special_request(request, sr_id):
 
 
 @login_required
+@require_POST
 def cancel_special_request(request, sr_id):
     sr = get_object_or_404(SpecialRequest, id=sr_id, status="active")
     next_url = request.POST.get("next") or request.GET.get("next") or "/inventory/volunteer/"
