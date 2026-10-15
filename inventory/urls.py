@@ -20,6 +20,7 @@ from .views import (
     volunteer_view,
     run_sheet_view,
     missed_collections_view,
+    overview_view,
     create_special_request,
     view_special_request,
     edit_special_request,
@@ -40,6 +41,7 @@ urlpatterns = [
     # Inventory (Admin)
     # ---------------------------
     path("", inventory_view, name="inventory"),
+    path("overview/", overview_view, name="overview"),
     path("add/", add_item, name="add_item"),
     path("add/confirm/", add_item_confirm, name="add_item_confirm"),
     path("delete/<int:item_id>/", delete_item, name="delete_item"),

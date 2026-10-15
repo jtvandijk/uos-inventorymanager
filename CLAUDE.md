@@ -57,6 +57,7 @@ Inventory list also shows messages. Other pages do not — don't assume messages
 - All pages extend `inventory/templates/base.html` (blocks: `title`, `extra_head`, `content`); partials (`_item_list.html`, `_sr_list.html`) don't
 - `base.html` loads Bootstrap CSS + JS bundle and Bootstrap Icons from CDN (not collected static); the JS bundle is in `<head>` so inline page scripts can use `bootstrap`
 - Each page still has its own header markup (logo, title, Beta badge) inside `content`
+- Admin nav is one include: `{% include "inventory/_admin_nav.html" with active="missed" %}` (keys: overview, inventory, special, missed, run_sheet, users, activity)
 - Favicon: `{% static 'favicon.ico' %}` — Under One Sky branded
 - Logo: `{% static 'logo.png' %}` — transparent background PNG
 
@@ -276,6 +277,17 @@ timestamp = DateTimeField(auto_now_add=True)
 **Not logged:** add item, auto-assign (system action), pack/unpack (admin prep action).
 
 **Admin view** (`/inventory/activity/`) — paginated (25/page, numbered elided range). Ordered by `-timestamp`. No filters — keep it simple.
+
+## Admin overview
+
+`/inventory/overview/` — admin-only, read-only, no pagination. Three sections:
+- **Stock available:** one table per size type (non-special categories × sizes, available items only). Size columns with no stock in that table are dropped. Amber = 1–2, red total = 0.
+- **Special requests demand vs stock:** per special category: waiting (active), assigned (fulfilled, item reserved/packed), in stock, shortfall = max(waiting − in stock, 0).
+- **Impact:** this month / last month / last 12 months — items given (`Item.given_at`), distinct person names on given reservations, SRs fulfilled, missed collections (`missed_at`), missed rate.
+
+## Volunteer filter chips
+
+Inventory tab only (`status=available`). `_apply_chips()` in views.py reads `cat`, `gender`, `size` GET params. Chips render at the top of `_item_list.html` and are recomputed on every AJAX refresh. Only in-stock options are listed. Picking a gender keeps unisex items. Changing category clears gender/size; switching to the Reserved tab clears all chips (`clearChips()`).
 
 ## Run sheet
 

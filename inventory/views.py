@@ -1,7 +1,8 @@
 from django.shortcuts import redirect, get_object_or_404, render
 from django.http import JsonResponse, HttpResponseRedirect
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.db.models.functions import Lower
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
@@ -14,6 +15,7 @@ from .forms import ItemForm, ItemEditForm, ReservationForm, SpecialRequestForm, 
 
 import json
 import re
+from datetime import datetime, time, timedelta
 
 
 # ---------------------------
@@ -1151,3 +1153,101 @@ def activity_log_view(request):
         "page_obj": page_obj,
         "elided_range": elided_range,
     }))
+
+
+# ---------------------------
+# Admin overview
+# ---------------------------
+
+def _stock_tables():
+    counts = {}
+    for row in Item.objects.filter(status="available", category__is_special=False).values(
+        "category_id", "size"
+    ).annotate(n=Count("id")):
+        counts[(row["category_id"], row["size"])] = row["n"]
+
+    tables = []
+    for size_type, label in Category.SIZE_TYPES:
+        categories = Category.objects.filter(is_special=False, size_type=size_type).order_by("name")
+        if not categories:
+            continue
+        sizes = list(SizeOption.objects.filter(size_type=size_type).order_by("id").values_list("value", "label"))
+        rows = []
+        for cat in categories:
+            total = sum(n for (cat_id, _), n in counts.items() if cat_id == cat.id)
+            rows.append({"category": cat, "cells": [counts.get((cat.id, v), 0) for v, _ in sizes], "total": total})
+        # Drop sizes nothing in this table is stocked in (e.g. shoes have both EU and UK options)
+        keep = [i for i in range(len(sizes)) if any(r["cells"][i] for r in rows)]
+        for r in rows:
+            r["cells"] = [r["cells"][i] for i in keep]
+        tables.append({"label": label, "sizes": [sizes[i][1] for i in keep], "rows": rows})
+    return tables
+
+
+def _special_demand():
+    rows = []
+    for cat in Category.objects.filter(is_special=True).order_by("name"):
+        waiting = SpecialRequest.objects.filter(category=cat, status="active").count()
+        in_stock = Item.objects.filter(category=cat, status="available").count()
+        rows.append({
+            "category": cat,
+            "waiting": waiting,
+            "assigned": SpecialRequest.objects.filter(
+                category=cat, status="fulfilled", fulfilled_by_item__status__in=["reserved", "packed"]
+            ).count(),
+            "in_stock": in_stock,
+            "shortfall": max(waiting - in_stock, 0),
+        })
+    return sorted(rows, key=lambda r: -r["shortfall"])
+
+
+def _impact(start, end):
+    given_res = Reservation.objects.filter(status="given", item__given_at__gte=start, item__given_at__lt=end)
+    collected = given_res.count()
+    missed = Reservation.objects.filter(status="missed", missed_at__gte=start, missed_at__lt=end).count()
+    return {
+        "items": Item.objects.filter(status="given", given_at__gte=start, given_at__lt=end).count(),
+        "people": given_res.annotate(p=Lower("person")).values("p").distinct().count(),
+        "special": SpecialRequest.objects.filter(
+            status="fulfilled", fulfilled_by_item__status="given",
+            fulfilled_by_item__given_at__gte=start, fulfilled_by_item__given_at__lt=end,
+        ).count(),
+        "missed": missed,
+        "missed_rate": round(100 * missed / (collected + missed)) if collected + missed else None,
+    }
+
+
+@login_required
+def overview_view(request):
+    if not is_admin(request.user):
+        return redirect("volunteer")
+
+    def midnight(d):
+        return timezone.make_aware(datetime.combine(d, time.min))
+
+    today = timezone.localdate()
+    this_month = today.replace(day=1)
+    last_month = (this_month - timedelta(days=1)).replace(day=1)
+    year_ago = this_month.replace(year=this_month.year - 1)
+    tomorrow = midnight(today + timedelta(days=1))
+
+    periods = [
+        ("This month", _impact(midnight(this_month), tomorrow)),
+        ("Last month", _impact(midnight(last_month), midnight(this_month))),
+        ("Last 12 months", _impact(midnight(year_ago), tomorrow)),
+    ]
+    impact_rows = [
+        ("Items handed out", "items"),
+        ("People helped (distinct names)", "people"),
+        ("Special requests fulfilled", "special"),
+        ("Missed collections", "missed"),
+        ("Missed rate", "missed_rate"),
+    ]
+
+    context = {
+        "stock_tables": _stock_tables(),
+        "special_demand": _special_demand(),
+        "period_labels": [label for label, _ in periods],
+        "impact": [(label, [p[key] for _, p in periods], key == "missed_rate") for label, key in impact_rows],
+    }
+    return render(request, "inventory/overview.html", add_role_context(request, context))

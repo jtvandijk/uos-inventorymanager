@@ -1,0 +1,25 @@
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item">
+        <a class="nav-link{% if active == 'overview' %} active{% endif %}" href="{% url 'overview' %}">Overview</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{% if active == 'inventory' %} active{% endif %}" href="{% url 'inventory' %}">Inventory</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{% if active == 'special' %} active{% endif %}" href="{% url 'admin_special_requests' %}">Special Requests</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{% if active == 'missed' %} active{% endif %}" href="{% url 'missed_collections' %}">Missed Collections</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{% if active == 'run_sheet' %} active{% endif %}" href="{% url 'run_sheet' %}">Run Sheet</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{% if active == 'users' %} active{% endif %}" href="{% url 'users' %}">
+            Users{% if pending_count %} <span class="badge bg-danger ms-1">{{ pending_count }}</span>{% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link{% if active == 'activity' %} active{% endif %}" href="{% url 'activity_log' %}">Activity</a>
+    </li>
+</ul>

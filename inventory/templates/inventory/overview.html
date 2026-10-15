@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Overview{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stock-table td, .stock-table th { white-space: nowrap; }
+    .stock-table .zero { color: #adb5bd; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+
+        <div class="d-flex align-items-center gap-2">
+            <img src="{% static 'logo.png' %}" alt="Logo" style="height: 40px;">
+            <h4 class="mb-0">UOS Inventory Manager</h4>
+            <span class="badge bg-dark px-3 py-2 shadow-sm"
+                style="font-size: 0.9rem; border-radius: 8px; opacity: 0.85;">
+                Beta
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">
+                Signed in as <strong>{{ request.user.username }}</strong>
+            </span>
+            <a href="{% url 'volunteer' %}" class="btn btn-outline-primary btn-sm">Volunteer View</a>
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+                {% csrf_token %}
+                <button class="btn btn-outline-secondary btn-sm">Logout</button>
+            </form>
+        </div>
+
+    </div>
+
+    {% include "inventory/_admin_nav.html" with active="overview" %}
+
+    <!-- Stock -->
+    <h5 class="mb-1">Stock available</h5>
+    <p class="text-muted small mb-3">Items in stock and not reserved. Amber = 1–2 left; red total = none left.</p>
+
+    {% for table in stock_tables %}
+    <h6 class="text-muted fw-semibold">{{ table.label }}</h6>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-sm text-center align-middle stock-table">
+            <thead class="table-light">
+            <tr>
+                <th class="text-start">Category</th>
+                {% for size in table.sizes %}<th>{{ size }}</th>{% endfor %}
+                <th>Total</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in table.rows %}
+            <tr>
+                <td class="text-start">{{ row.category.name }}</td>
+                {% for n in row.cells %}
+                <td class="{% if n == 0 %}zero{% elif n <= 2 %}table-warning{% endif %}">{% if n %}{{ n }}{% else %}–{% endif %}</td>
+                {% endfor %}
+                <td class="fw-semibold {% if row.total == 0 %}table-danger{% endif %}">{{ row.total }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+
+    <!-- Special requests -->
+    <h5 class="mb-1">Special requests: demand vs stock</h5>
+    <p class="text-muted small mb-3">Shortfall = people waiting minus items in stock: what to ask donors for.</p>
+
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-sm text-center align-middle">
+            <thead class="table-light">
+            <tr>
+                <th class="text-start">Category</th>
+                <th>Waiting</th>
+                <th>Assigned, not yet collected</th>
+                <th>In stock</th>
+                <th>Shortfall</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in special_demand %}
+            <tr>
+                <td class="text-start"><span class="badge bg-warning text-dark">{{ row.category.name }}</span></td>
+                <td>{{ row.waiting }}</td>
+                <td>{{ row.assigned }}</td>
+                <td>{{ row.in_stock }}</td>
+                <td class="fw-semibold {% if row.shortfall %}table-danger{% endif %}">{{ row.shortfall }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Impact -->
+    <h5 class="mb-1">Impact</h5>
+    <p class="text-muted small mb-3">People are counted by name as entered, so spelling variations count separately.</p>
+
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-sm text-center align-middle">
+            <thead class="table-light">
+            <tr>
+                <th class="text-start"></th>
+                {% for label in period_labels %}<th>{{ label }}</th>{% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for label, values, is_rate in impact %}
+            <tr>
+                <td class="text-start">{{ label }}</td>
+                {% for v in values %}
+                <td>{% if v is None %}–{% elif is_rate %}{{ v }}%{% else %}{{ v }}{% endif %}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}
