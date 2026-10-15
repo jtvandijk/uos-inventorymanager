@@ -22,7 +22,7 @@ Built and maintained by a solo volunteer.
 
 ## Tech stack
 
-- **Backend:** Django 6, SQLite
+- **Backend:** Django 5.2 LTS, SQLite
 - **Frontend:** Bootstrap 5.3.3, Bootstrap Icons 1.11.3, vanilla JS
 - **Production:** Nginx + Gunicorn, Let's Encrypt SSL via DuckDNS
 
