@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.contrib import messages
@@ -87,7 +88,7 @@ def _try_auto_assign_special(item, by_user=None, note_reason=None):
         route=req.route,
         reserved_for_date=_next_walk_day(req.requested_at.weekday()),
         notes=note,
-        reserved_by=by_user or req.requested_by,
+        reserved_by=req.requested_by or by_user,
     )
     res.save()
     SpecialRequest.objects.filter(pk=req.pk).update(
@@ -297,7 +298,6 @@ def edit_reservation(request, reservation_id):
             form.save()
             _log(request.user, "edit_reservation", item=item, person=reservation.person, route=reservation.route)
             messages.success(request, f"Reservation for {reservation.person} updated.")
-            from django.urls import reverse
             from urllib.parse import quote
             return redirect(f"{reverse('view_item', args=[item.id])}?next={quote(next_url, safe='')}")
     else:
@@ -471,7 +471,6 @@ def add_item(request):
                 names = ", ".join(f"{code} → {person}" for code, person in assigned_to)
                 messages.success(request, f"Auto-assigned from special request queue: {names}")
 
-            from django.urls import reverse
             codes_param = ",".join(created_codes)
             return redirect(reverse("add_item_confirm") + f"?codes={codes_param}")
     else:
@@ -540,6 +539,7 @@ def reassign_item(request, item_id):
             reserved_by=reservation.reserved_by,
         )
         new_res.save()
+        SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled").update(fulfilled_by_item=replacement)
 
         # Bypass model.delete() cascade (would set item→available); we want item→given
         Reservation.objects.filter(pk=reservation.pk).delete()
@@ -556,7 +556,6 @@ def reassign_item(request, item_id):
             request,
             f"Re-assigned to {replacement.code}. {person}'s reservation moved with collection date {original_date}.",
         )
-        from django.urls import reverse
         from urllib.parse import quote
         return redirect(f"{reverse('view_item', args=[replacement.id])}?next={quote(next_url, safe='')}")
 
@@ -660,7 +659,6 @@ def edit_item(request, item_id):
             updated.updated_at = timezone.now()
             updated.save()
             messages.success(request, f"Item {item.code} updated.")
-            from django.urls import reverse
             return redirect(f"{reverse('view_item', args=[item_id])}?next={next_url}")
     else:
         form = ItemEditForm(instance=item)
@@ -682,7 +680,16 @@ def edit_item(request, item_id):
 @login_required
 def delete_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
+    category = item.category
+    # Person still needs one: back in the queue at their original position
+    requeued = SpecialRequest.objects.filter(fulfilled_by_item=item, status="fulfilled").update(
+        status="active", fulfilled_at=None, fulfilled_by_item=None,
+    )
     item.delete()
+    if requeued:
+        other_item = Item.objects.filter(category=category, status="available").first()
+        if other_item:
+            _try_auto_assign_special(other_item, by_user=request.user, note_reason="item deleted")
 
     return redirect(request.GET.get("next", "/inventory/"))
 

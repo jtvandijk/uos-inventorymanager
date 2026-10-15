@@ -104,6 +104,7 @@ missed_at = models.DateTimeField(null=True, blank=True)
 Volunteers and admins can re-assign a reservation when the item is given to a different person.
 
 If a replacement item exists (same category, gender, size, status=available):
+- If the item fulfilled a SpecialRequest, re-point `fulfilled_by_item` to the replacement (otherwise the SR would show as Collected)
 - Delete original reservation via `Reservation.objects.filter(pk=...).delete()` (bypasses cascade)
 - Set `item.status = "given"`, `item.given_by = request.user`, `item.save()`
 - Create new `Reservation` on the replacement item (same person, date, route, notes)
@@ -137,6 +138,10 @@ Stores reservations with `status="missed"`. Reasons:
 Missed reservations stay linked to their original item in the DB. New reservations can be created for the same item without conflict — `Reservation.clean()` only checks `status="reserved"`.
 
 Notes on missed reservations are always system-generated (appended by `process_lapses` or `reassign_item`). No chat-icon is shown — the Reason badge and View → view_item are sufficient. Filter pills: Lapsed / No Replacement (no default; Clear appears when filter active).
+
+## Delete item
+
+`delete_item` (admin): if the item fulfilled a SpecialRequest, that SR goes back to `active` (original queue position) before the item is deleted, then another available item of the category is auto-assigned with `note_reason="item deleted"`. Regular reservations are cascade-deleted with the item.
 
 ## Cancel reservation
 
@@ -180,6 +185,7 @@ lapsed_at = DateTimeField(null=True, blank=True)
 - Also called from `process_special_lapses` (Pass 2) after lapses free up the queue
 - Finds oldest active request for the same category (`order_by("requested_at")`)
 - Collection date = next occurrence of the same weekday as `req.requested_at` (`_next_walk_day(req.requested_at.weekday())`) — preserves the walk day
+- Reservation `reserved_by` = the SR's `requested_by` (falls back to `by_user`), so the volunteer who filed it can cancel it
 - Creates Reservation via `res.save()` (cascades item→reserved), then `SpecialRequest.objects.filter(pk=...).update(status="fulfilled", ...)`
 - Reservation note: `"Re-assigned following {note_reason} (originally requested {date})."` when `note_reason` is set; otherwise `"Special request auto-assigned (originally requested {date})."`
 
