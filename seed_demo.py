@@ -1,5 +1,5 @@
 # Sets up demo scenarios on top of the fake stock:
-#   - a phone queue (waiting 9 weeks, 3 weeks, 2 days) with no phones in stock,
+#   - a phone queue (waiting 9 weeks, 3 weeks, 1 week) with no phones in stock,
 #     so adding a phone live shows it going to the longest-waiting person
 #   - sleeping bag and backpack queues with nothing in stock (Overview shortfall)
 #   - today's Waterloo walk (3 collections, 1 packed) and 2 for next week
@@ -47,14 +47,16 @@ def special_request(person, category_name, days_ago, confirmed_days_ago=None):
     )
 
 
+# Requests are backdated by whole weeks so they share today's weekday: auto-assigned
+# collection dates then land on the same weekday as the demo walk
 print("Special request queues (no stock, so they wait)...")
 Item.objects.filter(category__name__in=["Mobile Phone", "Sleeping Bag", "Backpack"], status="available").delete()
 special_request("Marek D", "Mobile Phone", 63, confirmed_days_ago=12)
-special_request("Grace O", "Mobile Phone", 22, confirmed_days_ago=5)
-special_request("Tom W", "Mobile Phone", 2)
-special_request("Ahmed K", "Sleeping Bag", 30, confirmed_days_ago=8)
-special_request("Lisa C", "Sleeping Bag", 10)
-special_request("Sophie W", "Backpack", 15, confirmed_days_ago=3)
+special_request("Grace O", "Mobile Phone", 21, confirmed_days_ago=5)
+special_request("Tom W", "Mobile Phone", 7)
+special_request("Ahmed K", "Sleeping Bag", 28, confirmed_days_ago=8)
+special_request("Lisa C", "Sleeping Bag", 14)
+special_request("Sophie W", "Backpack", 14, confirmed_days_ago=3)
 
 print("Today's Waterloo walk and next week...")
 for i, (item, person) in enumerate(zip(available_items(3), ["James S", "Maria T", "Ryan H"])):
@@ -102,4 +104,4 @@ print(f"  Phone queue: {SpecialRequest.objects.filter(category__name='Mobile Pho
       f"{Item.objects.filter(category__name='Mobile Phone', status='available').count()} in stock")
 print(f"  Today's walk (Waterloo): {Reservation.objects.filter(reserved_for_date=today, route=waterloo, status__in=['reserved', 'packed']).count()} collections")
 print(f"  Handed out in the last 90 days: {Item.objects.filter(status='given', given_at__gte=now - timedelta(days=90)).count()}")
-print("  Demo: as admin, add a Mobile Phone — it goes to Marek D (waiting 9 weeks), not Tom W (2 days).")
+print("  Demo: as admin, add a Mobile Phone — it goes to Marek D (waiting 9 weeks), not Tom W (1 week).")

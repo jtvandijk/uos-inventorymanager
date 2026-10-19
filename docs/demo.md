@@ -32,7 +32,7 @@ Users, categories and routes are never touched.
 
 | Scenario | Details | Where you see it |
 | --- | --- | --- |
-| Phone queue, none in stock | Marek D (waiting 9 weeks), Grace O (3 weeks), Tom W (2 days) | Overview, Requests tab |
+| Phone queue, none in stock | Marek D (waiting 9 weeks), Grace O (3 weeks), Tom W (1 week) | Overview, Requests tab |
 | Other queues | Sleeping bag: Ahmed K, Lisa C. Backpack: Sophie W | Overview shortfall |
 | Today's Waterloo walk | James S (already packed), Maria T, Ryan H | Today tab, Run Sheet |
 | Next week's Waterloo walk | Nina J, Carlos G | Reserved tab |
@@ -50,7 +50,7 @@ Log in as admin. Show steps 2–5 on a phone if you can.
 | 3 | **Inventory** tab: tap **Coat**, **Male**, **L**. Open one, tap **Reserve**. Enter a name, pick **Waterloo**, save. | Three taps to find the right coat. The collection date is already set to next week; the route is remembered for next time. |
 | 4 | **Reserved** tab: tap the **Waterloo** chip. Search **Patrick**, open it. | Filter by route. Patrick missed his collection, so it moved to next week automatically (clock icon). Miss again and the coat goes back to stock. Nothing is held forever. |
 | 5 | **Requests** tab. Open **Tom W**. | The phone queue in order of who asked first. **Still Active**: volunteers confirm every 4 weeks, otherwise the request lapses, so the queue stays real. |
-| 6 | Back to admin: **Inventory → + Add Item**, category **Mobile Phone**, any device code, save, then **Back to Inventory**. | The message says the phone went to **Marek D**, who has waited 9 weeks, not Tom, who asked 2 days ago. Nobody had to remember. **This is the moment for the phone story.** |
+| 6 | Back to admin: **Inventory → + Add Item**, category **Mobile Phone**, any device code, save, then **Back to Inventory**. | The message says the phone went to **Marek D**, who has waited 9 weeks, not Tom, who asked a week ago. Nobody had to remember. **This is the moment for the phone story.** |
 | 7 | **Run Sheet**: today's date, route **Waterloo**, then **Pack … items** (usually 2). | The packing list for a walk, by route. One tap packs the lot. |
 | 8 | Volunteer view → **Today** → open **Maria T** → **Item Collected**. | Done on the street in one tap. It's in the impact numbers straight away. |
 
