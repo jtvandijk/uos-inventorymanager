@@ -69,7 +69,7 @@ python manage.py shell < seed_categories.py
 python manage.py shell < seed_demo.py
 ```
 
-Adds a phone queue with nobody's phone in stock (add one as admin and it goes to the person waiting longest), sleeping bag and backpack queues, today's Waterloo walk, a grace-week reservation, and three months of history so the Overview's impact numbers aren't empty.
+For the full demo script (what to click and what to point out), see [docs/demo.md](docs/demo.md). Adds a phone queue with nobody's phone in stock (add one as admin and it goes to the person waiting longest), sleeping bag and backpack queues, today's Waterloo walk, a grace-week reservation, and three months of history so the Overview's impact numbers aren't empty.
 
 ## Reservation lapse (automated)
 
